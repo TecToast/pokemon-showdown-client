@@ -163,4 +163,8 @@ RewriteRule ^testclient-beta\.html$ - [F]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^(apple-touch-icon-precomposed\.png)$ - [R=404,L]
 
+RewriteCond "%{REQUEST_URI}" !=./
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.+)$ https://play.pokemonshowdown.com/$1 [R=302,L]
+
 </IfModule>
