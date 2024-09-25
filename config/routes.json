@@ -1,8 +1,8 @@
 {
     "root": "pokemonshowdown.com",
-    "client": "play.pokemonshowdown.com",
+    "client": "showdown.tectoast.de",
     "dex": "dex.pokemonshowdown.com",
-    "replays": "replay.pokemonshowdown.com",
+    "replays": "replays.tectoast.de",
     "users": "pokemonshowdown.com/users",
     "teams": "teams.pokemonshowdown.com"
 }
