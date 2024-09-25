@@ -87,8 +87,8 @@ class Replays {
 			if ($player[0] === '!') $player = substr($player, 1);
 		}
 
-		$res = $this->db->prepare("UPDATE replays SET views = views + 1 WHERE id = ? LIMIT 1");
-		$res->execute([$id]);
+// 		$res = $this->db->prepare("UPDATE replays SET views = views + 1 WHERE id = ? LIMIT 1");
+// 		$res->execute([$id]);
 
 		$replay['safe_inputlog'] = (
 			str_ends_with($replay['formatid'], 'randombattle') ||
