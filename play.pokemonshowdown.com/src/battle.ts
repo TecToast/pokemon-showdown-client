@@ -3383,6 +3383,10 @@ export class Battle {
 			if (this.tier.includes(`Let's Go`)) {
 				this.dex = Dex.mod('gen7letsgo' as ID);
 			}
+			// MODDING
+			if (this.tier.includes(`Batzi`)) {
+				this.dex = Dex.mod('gen9batzi' as ID);
+			}
 			if (this.tier.includes('Super Staff Bros')) {
 				this.dex = Dex.mod('gen9ssb' as ID);
 			}

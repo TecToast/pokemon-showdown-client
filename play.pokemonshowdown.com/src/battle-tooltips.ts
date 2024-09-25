@@ -146,6 +146,11 @@ class BattleTooltips {
 		this.battle = battle;
 	}
 
+	// MODDING
+	isModActive(formatPart: string) {
+		return this.battle.tier.includes(formatPart);
+	}
+
 	// tooltips
 	// Touch delay, pressing finger more than that time will cause the tooltip to open.
 	// Shorter time will cause the button to click
@@ -1183,9 +1188,28 @@ class BattleTooltips {
 					// Pokemon with Hisui evolutions
 					evoSpecies.isNonstandard === "Unobtainable";
 		});
-		if (item === 'eviolite' && (isNFE || this.battle.dex.species.get(serverPokemon.speciesForme).id === 'dipplin')) {
-			stats.def = Math.floor(stats.def * 1.5);
-			stats.spd = Math.floor(stats.spd * 1.5);
+		if (this.isModActive("Batzi")) {
+			function calcEviolite(dex: ModdedDex, checkmon: Species): number {
+				if (!checkmon.evos) return 0;
+				const nextCandidates = checkmon.evos.map(mon => dex.species.get(mon));
+				if (nextCandidates.length === 0) return 0;
+				let highest = calcEviolite(dex, nextCandidates[0]);
+				for (let i = 1; i < nextCandidates.length; i++) {
+					const result = calcEviolite(dex, nextCandidates[i]);
+					if (result > highest) highest = result;
+				}
+				return highest + 1;
+			}
+			const result = calcEviolite(this.battle.dex, this.battle.dex.species.get(serverPokemon.speciesForme));
+			if (result > 0) {
+				stats.def = Math.floor(stats.def * (1 + result * 0.5));
+				stats.spd = Math.floor(stats.spd * (1 + result * 0.5));
+			}
+		} else {
+			if (item === 'eviolite' && (isNFE || this.battle.dex.species.get(serverPokemon.speciesForme).id === 'dipplin')) {
+				stats.def = Math.floor(stats.def * 1.5);
+				stats.spd = Math.floor(stats.spd * 1.5);
+			}
 		}
 		if (ability === 'grasspelt' && this.battle.hasPseudoWeather('Grassy Terrain')) {
 			stats.def = Math.floor(stats.def * 1.5);
@@ -1357,7 +1381,7 @@ class BattleTooltips {
 		stats.spe = stats.spe % 1 > 0.5 ? Math.ceil(stats.spe) : Math.floor(stats.spe);
 
 		if (pokemon.status === 'par' && ability !== 'quickfeet') {
-			if (this.battle.gen > 6) {
+			if (this.battle.gen > 6 && !this.isModActive("Batzi")) {
 				stats.spe = Math.floor(stats.spe * 0.5);
 			} else {
 				stats.spe = Math.floor(stats.spe * 0.25);
@@ -1906,7 +1930,7 @@ class BattleTooltips {
 			value.modify(2, move.name + ' + status');
 		}
 		if (move.id === 'lastrespects') {
-			value.set(Math.min(50 + 50 * pokemon.side.faintCounter));
+			value.set(Math.min(50 + (this.isModActive("Batzi") ? 20 : 50) * pokemon.side.faintCounter));
 		}
 		if (move.id === 'punishment' && target) {
 			let boostCount = 0;
@@ -2047,7 +2071,7 @@ class BattleTooltips {
 		}
 		// Base power based on times hit
 		if (move.id === 'ragefist') {
-			value.set(Math.min(350, 50 + 50 * pokemon.timesAttacked),
+			value.set(Math.min(350, 50 + (this.isModActive("Batzi") ? 20 : 50) * pokemon.timesAttacked),
 				pokemon.timesAttacked > 0
 					? `Hit ${pokemon.timesAttacked} time${pokemon.timesAttacked > 1 ? 's' : ''}`
 					: undefined);

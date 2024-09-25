@@ -1333,7 +1333,7 @@ Storage.importTeam = function (buffer, teams) {
 			if (line.substr(0, 14) === 'Hidden Power [') {
 				var hptype = line.substr(14, line.length - 15);
 				line = 'Hidden Power ' + hptype;
-				var type = Dex.types.get(hptype);
+				var type = Dex.types.get(hptype) || Dex.types.get('Dark');
 				if (!curSet.ivs && type) {
 					curSet.ivs = {};
 					for (var stat in type.HPivs) {
@@ -1455,7 +1455,7 @@ Storage.exportTeam = function (team, gen, hidestats) {
 							continue;
 						}
 						for (var stat in BattleStatNames) {
-							if ((curSet.ivs[stat] === undefined ? 31 : curSet.ivs[stat]) !== (Dex.types.get(hpType).HPivs[stat] || 31)) {
+							if ((curSet.ivs[stat] === undefined ? 31 : curSet.ivs[stat]) !== ((Dex.types.get(hpType) || Dex.types.get("Dark")).HPivs[stat] || 31)) {
 								defaultIvs = false;
 								break;
 							}
