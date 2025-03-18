@@ -1304,6 +1304,9 @@ process.stdout.write("Building `data/pokedex.js`... ");
 	const buf = 'exports.BattlePokedex = ' + es3stringify(Pokedex) + ';';
 	fs.writeFileSync('play.pokemonshowdown.com/data/pokedex.js', buf);
 	fs.writeFileSync('play.pokemonshowdown.com/data/pokedex.json', JSON.stringify(Pokedex));
+	const batziChanges = requireNoCache('../caches/pokemon-showdown/dist/data/mods/gen9batzi/pokedex.js').Pokedex;
+	fs.writeFileSync('play.pokemonshowdown.com/data/pokedexbatzichanges.json', JSON.stringify(batziChanges));
+
 }
 
 console.log("DONE");
@@ -1325,6 +1328,8 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
 	const buf = 'exports.BattleMovedex = ' + es3stringify(Moves) + ';';
 	fs.writeFileSync('play.pokemonshowdown.com/data/moves.js', buf);
 	fs.writeFileSync('play.pokemonshowdown.com/data/moves.json', JSON.stringify(Moves));
+	const batziChanges = requireNoCache('../caches/pokemon-showdown/dist/data/mods/gen9batzi/moves.js').Moves;
+	fs.writeFileSync('play.pokemonshowdown.com/data/movesbatzichanges.json', JSON.stringify(batziChanges));
 }
 
 /*********************************************************
@@ -1355,6 +1360,7 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
 	}
 	const buf = 'exports.BattleAbilities = ' + es3stringify(Abilities) + ';';
 	fs.writeFileSync('play.pokemonshowdown.com/data/abilities.js', buf);
+	fs.writeFileSync('play.pokemonshowdown.com/data/abilities.json', JSON.stringify(Abilities));
 }
 
 /*********************************************************
