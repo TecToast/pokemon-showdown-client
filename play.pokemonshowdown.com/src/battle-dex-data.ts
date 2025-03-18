@@ -623,8 +623,32 @@ const BattlePokemonIconIndexes: {[id: string]: number} = {
 	chuggalong: 1512 + 74,
 
 	// MODDING
+	cinderacemega: 1320 + 80,
+	coalossalmega: 1320 + 65,
+	garbodormega: 1320 + 60,
+	rillaboommega: 1320 + 79,
+	butterfreemega: 1320 + 51,
+	copperajahmega: 1320 + 74,
 	centiskorchmega: 1320 + 70,
-
+	alcremiemega: 1320 + 73,
+	kinglermega: 1320 + 56,
+	corviknightmega: 1320 + 62,
+	meowthmega: 1320 + 53,
+	laprasmega: 1320 + 57,
+	inteleonmega: 1320 + 81,
+	orbeetlemega: 1320 + 63,
+	toxtricitymega: 1320 + 69,
+	drednawmega: 1320 + 64,
+	snorlaxmega: 1320 + 59,
+	flapplemega: 1320 + 66,
+	appletunmega: 1320 + 67,
+	grimmsnarlmega: 1320 + 72,
+	hatterenemega: 1320 + 71,
+	blastoisemegax: 1320 + 78,
+	venusaurmegax: 1320 + 77,
+	machampmega: 1320 + 54,
+	luvdiscmega: 1320 + 76,
+	sandacondamega: 1320 + 68,
 };
 
 const BattlePokemonIconIndexesLeft: {[id: string]: number} = {
