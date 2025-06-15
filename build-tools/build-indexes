@@ -654,23 +654,27 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			if (item.gen > genNum) {
 				continue;
 			}
-			if (item.isNonstandard && !isMetBattle) {
-				if (isNatDex) {
-					let curItem = item;
-					let curGen = genNum;
-					while (curItem.isNonstandard && curGen >= 7) {
-						curItem = Dex.forGen(curGen).items.get(item.id);
-						curGen--;
+			const isModdedItem = (item.isNonstandard && item.isNonstandard !== 'Future' && item.isNonstandard !== 'Past');
+			if(!isModdedItem) {
+				if (item.isNonstandard && !isMetBattle) {
+					if (isNatDex) {
+						let curItem = item;
+						let curGen = genNum;
+						while (curItem.isNonstandard && curGen >= 7) {
+							curItem = Dex.forGen(curGen).items.get(item.id);
+							curGen--;
+						}
+						if (curItem.isNonstandard) continue;
+					} else if (genNum !== 2) {
+						continue;
 					}
-					if (curItem.isNonstandard) continue;
-				} else if (genNum !== 2) {
-					continue;
+				}
+				if (isMetBattle) {
+					const banlist = Dex.formats.getRuleTable(Dex.formats.get(gen + 'metronomebattle'));
+					if (banlist.isBanned('item:' + item.id)) continue;
 				}
 			}
-			if (isMetBattle) {
-				const banlist = Dex.formats.getRuleTable(Dex.formats.get(gen + 'metronomebattle'));
-				if (banlist.isBanned('item:' + item.id)) continue;
-			}
+			if(isModdedItem && !gen.endsWith(item.isNonstandard.toLowerCase())) continue;
 			switch (id) {
 			// mainstays
 			case 'choiceband':
@@ -865,6 +869,9 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			case 'iceberry':
 			case 'berry':
 				poorItems.push(id);
+				break;
+			case 'scrappyscent':
+				greatItems.push(id);
 				break;
 			default:
 				if (

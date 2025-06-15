@@ -1241,7 +1241,8 @@ export class BattleTooltips {
 				}
 				return highest + 1;
 			}
-			const result = calcEviolite(this.battle.dex, this.battle.dex.species.get(serverPokemon.speciesForme));
+			const result = this.battle.dex.species.get(serverPokemon.speciesForme).id === 'phione'
+				? 1 : calcEviolite(this.battle.dex, this.battle.dex.species.get(serverPokemon.speciesForme));
 			if (result > 0) {
 				stats.def = Math.floor(stats.def * (1 + result * 0.5));
 				stats.spd = Math.floor(stats.spd * (1 + result * 0.5));
@@ -1600,6 +1601,12 @@ export class BattleTooltips {
 		let item = this.battle.dex.items.get(value.itemName);
 		if (move.id === 'multiattack' && item.onMemory) {
 			if (value.itemModify(0)) moveType = item.onMemory;
+		}
+		if (this.isModActive("Batzi") && move.id === 'multiattack') {
+			const name = pokemon.speciesForme;
+			if (name.startsWith("Silvally-")) {
+				moveType = name.substring(name.indexOf("-") + 1) as TypeName;
+			}
 		}
 		if (move.id === 'judgment' && item.onPlate && !item.zMoveType) {
 			if (value.itemModify(0)) moveType = item.onPlate;
@@ -2157,6 +2164,9 @@ export class BattleTooltips {
 		}
 		if (move.flags['sound']) {
 			value.abilityModify(1.3, "Punk Rock");
+			if(this.isModActive("Batzi")) {
+				value.abilityModify(1.2, "Liquid Voice");
+			}
 		}
 		if (move.flags['slicing']) {
 			value.abilityModify(1.5, "Sharpness");
