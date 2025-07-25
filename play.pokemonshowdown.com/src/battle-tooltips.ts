@@ -14,6 +14,9 @@ import type { BattleScene } from "./battle-animations";
 import { BattleLog } from "./battle-log";
 import { Move, BattleNatures } from "./battle-dex-data";
 import { BattleTextParser } from "./battle-text-parser";
+import Species = Dex.Species;
+import TypeName = Dex.TypeName;
+import StatNameExceptHP = Dex.StatNameExceptHP;
 
 export class ModifiableValue {
 	value = 0;
@@ -1430,7 +1433,7 @@ export class BattleTooltips {
 		stats.spe = stats.spe % 1 > 0.5 ? Math.ceil(stats.spe) : Math.floor(stats.spe);
 
 		if (pokemon.status === 'par' && ability !== 'quickfeet') {
-			if (this.battle.gen > 6 && !this.isModActive("Batzi")) {
+			if (this.battle.gen > 6) {
 				stats.spe = Math.floor(stats.spe * 0.5);
 			} else {
 				stats.spe = Math.floor(stats.spe * 0.25);
@@ -2972,7 +2975,7 @@ export class BattleStatGuesser {
 		if (role === 'Fast Bulky Support') moveCount['Ultrafast'] = 0;
 		if (plusStat === 'spe' && moveCount['Ultrafast']) {
 			if (statChart[role][1] === 'atk' || statChart[role][1] === 'spa') {
-				plusStat = statChart[role][1];
+				plusStat = statChart[role][1] as StatNameExceptHP;
 			} else if (moveCount['Physical'] >= 3) {
 				plusStat = 'atk';
 			} else if (stats.spd > stats.def) {
