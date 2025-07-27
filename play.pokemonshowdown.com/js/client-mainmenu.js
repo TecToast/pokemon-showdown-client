@@ -1276,6 +1276,7 @@
 					"Random Meta of the Decade": true
 				};
 			}
+			this.open["Modded"] = true; // always open modded formats
 			if (!this.starred) this.starred = Storage.prefs('starredformats') || {};
 			if (!this.search) this.search = "";
 			this.onselect = data.onselect;
