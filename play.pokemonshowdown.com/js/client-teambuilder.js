@@ -2,6 +2,7 @@
 
 	// this is a useful global
 	var teams;
+	const MOD_IDS = ['batzi', 'dml']
 
 	exports.TeambuilderRoom = exports.Room.extend({
 		type: 'teambuilder',
@@ -34,8 +35,10 @@
 					this.curTeam.dex = Dex.mod('gen9legendsou');
 				}
 				// MODDING
-				if (this.curTeam.format.includes('batzi')) {
-					this.curTeam.dex = Dex.mod('gen9batzi');
+				for(const modId of MOD_IDS) {
+					if (this.curTeam.format.includes(modId)) {
+						this.curTeam.dex = Dex.mod('gen9' + modId);
+					}
 				}
 				Storage.activeSetList = this.curSetList;
 			}
@@ -766,8 +769,10 @@
 				this.curTeam.dex = Dex.mod('gen9legendsou');
 			}
 			// MODDING
-			if (this.curTeam.format.includes('batzi')) {
-				this.curTeam.dex = Dex.mod('gen9batzi');
+			for(const modId of MOD_IDS) {
+				if (this.curTeam.format.includes(modId)) {
+					this.curTeam.dex = Dex.mod(`gen9${modId}`);
+				}
 			}
 			Storage.activeSetList = this.curSetList = Storage.unpackTeam(this.curTeam.team);
 			this.curTeamIndex = i;
@@ -1626,8 +1631,10 @@
 				this.curTeam.dex = Dex.mod('gen9legendsou');
 			}
 			// MODDING
-			if (this.curTeam.format.includes('batzi')) {
-				this.curTeam.dex = Dex.mod('gen9batzi');
+			for(const modId of MOD_IDS) {
+				if (this.curTeam.format.includes(modId)) {
+					this.curTeam.dex = Dex.mod(`gen9${modId}`);
+				}
 			}
 			this.save();
 			if (this.curTeam.gen === 5 && !Dex.loadedSpriteData['bw']) Dex.loadSpriteData('bw');
