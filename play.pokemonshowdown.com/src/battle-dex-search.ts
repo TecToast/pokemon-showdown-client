@@ -28,8 +28,8 @@ declare const BattleSearchIndex: [ID, SearchType, number?, number?][];
 declare const BattleSearchIndexOffset: any;
 declare const BattleTeambuilderTable: any;
 
-const MOD_IDS = ['batzi', 'dml']
-type ModFormatType = 'batzi' | 'dml'
+const MOD_IDS = ['batzi', 'dml', 'mnm']
+type ModFormatType = 'batzi' | 'dml' | 'mnm'
 
 /**
  * Backend for search UIs.
