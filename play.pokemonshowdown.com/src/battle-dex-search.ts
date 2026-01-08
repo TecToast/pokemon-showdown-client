@@ -1826,7 +1826,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		// MODDING
 		const regionBornLegality = dex.gen >= 6 &&
 			(/^battle(spot|stadium|festival)/.test(format) || format.startsWith('bss') ||
-				format.startsWith('vgc') || (dex.gen === 9 && this.formatType !== 'natdex' && this.formatType !== 'legendsza') && !MOD_IDS.includes(this.formatType as string)));
+				format.startsWith('vgc') || (dex.gen === 9 && this.formatType !== 'natdex' && this.formatType !== 'legendsza' && !MOD_IDS.includes(this.formatType as string)));
 
 		let learnsetid = this.firstLearnsetid(species.id);
 		let moves: string[] = [];
