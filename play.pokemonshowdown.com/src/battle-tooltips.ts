@@ -12,7 +12,7 @@ import { Pokemon, type Battle, type PPState, type ServerPokemon } from "./battle
 import { Dex, type ModdedDex, toID, type ID } from "./battle-dex";
 import type { BattleScene } from "./battle-animations";
 import { BattleLog } from "./battle-log";
-import { Move, BattleNatures } from "./battle-dex-data";
+import {Move, BattleNatures, type StatNameExceptHP} from "./battle-dex-data";
 import { BattleTextParser } from "./battle-text-parser";
 
 export class ModifiableValue {
@@ -1285,7 +1285,7 @@ export class BattleTooltips {
 		}
 		if (item === 'eviolite') {
 			if (this.isModActive("Batzi")) {
-				function calcEviolite(dex: ModdedDex, checkmon: Species): number {
+				function calcEviolite(dex: ModdedDex, checkmon: Dex.Species): number {
 					if (!checkmon.evos) return 0;
 					const nextCandidates = checkmon.evos.map(mon => dex.species.get(mon));
 					if (nextCandidates.length === 0) return 0;
@@ -1671,7 +1671,7 @@ export class BattleTooltips {
 		if (this.isModActive("Batzi") && move.id === 'multiattack') {
 			const name = pokemon.speciesForme;
 			if (name.startsWith("Silvally-")) {
-				moveType = name.substring(name.indexOf("-") + 1) as TypeName;
+				moveType = name.substring(name.indexOf("-") + 1) as Dex.TypeName;
 			}
 		}
 		if (move.id === 'judgment' && item.onPlate && !item.zMoveType) {
