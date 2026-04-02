@@ -8,15 +8,12 @@
  * @license MIT
  */
 
-import {Pokemon, type Battle, type ServerPokemon} from "./battle";
-import {Dex, type ModdedDex, toID, type ID} from "./battle-dex";
-import type {BattleScene} from "./battle-animations";
-import {BattleLog} from "./battle-log";
-import {Move, BattleNatures} from "./battle-dex-data";
-import {BattleTextParser} from "./battle-text-parser";
-import Species = Dex.Species;
-import TypeName = Dex.TypeName;
-import StatNameExceptHP = Dex.StatNameExceptHP;
+import { Pokemon, type Battle, type PPState, type ServerPokemon } from "./battle";
+import { Dex, type ModdedDex, toID, type ID } from "./battle-dex";
+import type { BattleScene } from "./battle-animations";
+import { BattleLog } from "./battle-log";
+import { Move, BattleNatures } from "./battle-dex-data";
+import { BattleTextParser } from "./battle-text-parser";
 
 export class ModifiableValue {
 	value = 0;
@@ -309,100 +306,100 @@ export class BattleTooltips {
 
 		let buf: string;
 		switch (type) {
-			case 'move':
-			case 'zmove':
-			case 'maxmove': { // move|MOVE|ACTIVEPOKEMON|[GMAXMOVE]
-				let move = this.battle.dex.moves.get(args[1]);
-				let teamIndex = parseInt(args[2], 10);
-				let pokemon = this.battle.nearSide.active[
+		case 'move':
+		case 'zmove':
+		case 'maxmove': { // move|MOVE|ACTIVEPOKEMON|[GMAXMOVE]
+			let move = this.battle.dex.moves.get(args[1]);
+			let teamIndex = parseInt(args[2], 10);
+			let pokemon = this.battle.nearSide.active[
 				teamIndex + this.battle.pokemonControlled * Math.floor(this.battle.mySide.n / 2)
-					];
-				let gmaxMove = args[3] ? this.battle.dex.moves.get(args[3]) : undefined;
-				if (!pokemon) return false;
-				let serverPokemon = this.battle.myPokemon![teamIndex];
-				buf = this.showMoveTooltip(move, type, pokemon, serverPokemon, gmaxMove);
-				break;
-			}
+			];
+			let gmaxMove = args[3] ? this.battle.dex.moves.get(args[3]) : undefined;
+			if (!pokemon) return false;
+			let serverPokemon = this.battle.myPokemon![teamIndex];
+			buf = this.showMoveTooltip(move, type, pokemon, serverPokemon, gmaxMove);
+			break;
+		}
 
-			case 'pokemon': { // pokemon|SIDE|POKEMON
-				// mouse over sidebar pokemon
-				// pokemon definitely exists, serverPokemon always ignored
-				let sideIndex = parseInt(args[1], 10);
-				let side = this.battle.sides[sideIndex];
-				let pokemon = side.pokemon[parseInt(args[2], 10)];
-				if (args[3] === 'illusion') {
-					buf = '';
-					const species = pokemon.getBaseSpecies().baseSpecies;
-					let index = 1;
-					for (const otherPokemon of side.pokemon) {
-						if (otherPokemon.getBaseSpecies().baseSpecies === species) {
-							buf += this.showPokemonTooltip(otherPokemon, null, false, index);
-							index++;
-						}
+		case 'pokemon': { // pokemon|SIDE|POKEMON
+			// mouse over sidebar pokemon
+			// pokemon definitely exists, serverPokemon always ignored
+			let sideIndex = parseInt(args[1], 10);
+			let side = this.battle.sides[sideIndex];
+			let pokemon = side.pokemon[parseInt(args[2], 10)];
+			if (args[3] === 'illusion') {
+				buf = '';
+				const species = pokemon.getBaseSpecies().baseSpecies;
+				let index = 1;
+				for (const otherPokemon of side.pokemon) {
+					if (otherPokemon.getBaseSpecies().baseSpecies === species) {
+						buf += this.showPokemonTooltip(otherPokemon, null, false, index);
+						index++;
 					}
-				} else {
-					buf = this.showPokemonTooltip(pokemon);
 				}
-				break;
+			} else {
+				buf = this.showPokemonTooltip(pokemon);
 			}
-			case 'activepokemon': { // activepokemon|SIDE|ACTIVE
-				// mouse over active pokemon
-				// pokemon definitely exists, serverPokemon maybe
-				let sideIndex = parseInt(args[1], 10);
-				let side = this.battle.sides[+this.battle.viewpointSwitched ^ sideIndex];
-				let activeIndex = parseInt(args[2], 10);
-				let pokemonIndex = activeIndex;
-				if (activeIndex >= 1 && this.battle.sides.length > 2) {
-					pokemonIndex -= 1;
-					side = this.battle.sides[side.n + 2];
-				}
-				let pokemon = side.active[activeIndex];
-				let serverPokemon = null;
-				if (side === this.battle.mySide && this.battle.myPokemon) {
-					serverPokemon = this.battle.myPokemon[pokemonIndex];
-				}
-				if (side === this.battle.mySide.ally && this.battle.myAllyPokemon) {
-					serverPokemon = this.battle.myAllyPokemon[pokemonIndex];
-				}
-				if (!pokemon) return false;
-				buf = this.showPokemonTooltip(pokemon, serverPokemon, true);
-				break;
+			break;
+		}
+		case 'activepokemon': { // activepokemon|SIDE|ACTIVE
+			// mouse over active pokemon
+			// pokemon definitely exists, serverPokemon maybe
+			let sideIndex = parseInt(args[1], 10);
+			let side = this.battle.sides[+this.battle.viewpointSwitched ^ sideIndex];
+			let activeIndex = parseInt(args[2], 10);
+			let pokemonIndex = activeIndex;
+			if (activeIndex >= 1 && this.battle.sides.length > 2) {
+				pokemonIndex -= 1;
+				side = this.battle.sides[side.n + 2];
 			}
-			case 'switchpokemon': { // switchpokemon|POKEMON
-				// mouse over switchable pokemon
-				// serverPokemon definitely exists, sidePokemon maybe
-				// let side = this.battle.mySide;
-				let activeIndex = parseInt(args[1], 10);
-				let pokemon = null;
-				/* if (activeIndex < side.active.length && activeIndex < this.battle.pokemonControlled) {
+			let pokemon = side.active[activeIndex];
+			let serverPokemon = null;
+			if (side === this.battle.mySide && this.battle.myPokemon) {
+				serverPokemon = this.battle.myPokemon[pokemonIndex];
+			}
+			if (side === this.battle.mySide.ally && this.battle.myAllyPokemon) {
+				serverPokemon = this.battle.myAllyPokemon[pokemonIndex];
+			}
+			if (!pokemon) return false;
+			buf = this.showPokemonTooltip(pokemon, serverPokemon, true);
+			break;
+		}
+		case 'switchpokemon': { // switchpokemon|POKEMON
+			// mouse over switchable pokemon
+			// serverPokemon definitely exists, sidePokemon maybe
+			// let side = this.battle.mySide;
+			let activeIndex = parseInt(args[1], 10);
+			let pokemon = null;
+			/* if (activeIndex < side.active.length && activeIndex < this.battle.pokemonControlled) {
 					pokemon = side.active[activeIndex];
 					if (pokemon && pokemon.side === side.ally) pokemon = null;
 				} */
-				let serverPokemon = this.battle.myPokemon![activeIndex];
-				buf = this.showPokemonTooltip(pokemon, serverPokemon);
-				break;
-			}
-			case 'allypokemon': { // allypokemon|POKEMON
-				// mouse over ally's pokemon in multi battles
-				// serverPokemon definitely exists, sidePokemon maybe
-				// let side = this.battle.mySide.ally;
-				let activeIndex = parseInt(args[1], 10);
-				let pokemon = null;
-				/* if (activeIndex < side.pokemon.length) {
+			let serverPokemon = this.battle.myPokemon![activeIndex];
+			buf = this.showPokemonTooltip(pokemon, serverPokemon);
+			break;
+		}
+		case 'allypokemon': { // allypokemon|POKEMON
+			// mouse over ally's pokemon in multi battles
+			// serverPokemon definitely exists, sidePokemon maybe
+			// let side = this.battle.mySide.ally;
+			let activeIndex = parseInt(args[1], 10);
+			let pokemon = null;
+			/* if (activeIndex < side.pokemon.length) {
 					pokemon = side.pokemon[activeIndex] || side.ally ? side.ally.pokemon[activeIndex] : null;
 				} */
-				let serverPokemon = this.battle.myAllyPokemon ? this.battle.myAllyPokemon[activeIndex] : null;
-				buf = this.showPokemonTooltip(pokemon, serverPokemon);
-				break;
-			}
-			case 'field': {
-				buf = this.showFieldTooltip();
-				break;
-			}
-			default:
-				// "throws" an error without crashing
-				Promise.resolve(new Error(`unrecognized type`));
-				buf = `<p class="message-error" style="white-space: pre-wrap">${new Error(`unrecognized type`).stack!}</p>`;
+			let serverPokemon = this.battle.myAllyPokemon ? this.battle.myAllyPokemon[activeIndex] : null;
+			buf = this.showPokemonTooltip(pokemon, serverPokemon);
+			break;
+		}
+		case 'field': {
+			buf = this.showFieldTooltip();
+			break;
+		}
+		default:
+			// "throws" an error without crashing
+			Promise.resolve(new Error(`unrecognized type`));
+			buf = `<p class="message-error" style="white-space: pre-wrap">${new Error(`unrecognized type`).stack!}</p>`;
 		}
 
 		this.placeTooltip(buf, elem, ownHeight, type);
@@ -576,7 +573,7 @@ export class BattleTooltips {
 		let text = '';
 
 		let zEffect = '';
-		let foeActive = pokemon.side.foe.active;
+		let foeActive = [...pokemon.side.foe.active].reverse();
 		if (this.battle.gameType === 'freeforall') {
 			foeActive = [...foeActive, ...pokemon.side.active].filter(active => active !== pokemon);
 		}
@@ -829,7 +826,32 @@ export class BattleTooltips {
 				if (failMessage) text += `<p>${failMessage}</p>`;
 			}
 		}
+
+		for (const possibleTarget of foeActive) {
+			if (!possibleTarget) continue;
+			const effectiveness = this.getMoveEffectiveness(pokemon, move, moveType, category, possibleTarget);
+			if (effectiveness === null) {
+				// do nothing
+			} else if (effectiveness === 0) {
+				text += `<p><span class="effectiveness-icon">&times;</span> <strong>No effect</strong> vs. ${BattleLog.escapeHTML(this.getNickname(possibleTarget))}</p>`;
+			} else if (effectiveness < 0.5) {
+				const effectivenessText = effectiveness === 0.25 ? '&#x00BC;' : effectiveness;
+				text += `<p><span class="effectiveness-icon">&#x25BC;</span> <strong>Mostly ineffective</strong> vs. ${BattleLog.escapeHTML(this.getNickname(possibleTarget))} <small>(${effectivenessText}&times;)</small></p>`;
+			} else if (effectiveness < 1) {
+				const effectivenessText = effectiveness === 0.5 ? '&#x00BD;' : effectiveness;
+				text += `<p><span class="effectiveness-icon">&#x25B3;</span> <strong>Not very effective</strong> vs. ${BattleLog.escapeHTML(this.getNickname(possibleTarget))} <small>(${effectivenessText}&times;)</small></p>`;
+			} else if (effectiveness > 2) {
+				text += `<p><span class="effectiveness-icon">&#x2605;</span> <strong>Extremely effective</strong> vs. ${BattleLog.escapeHTML(this.getNickname(possibleTarget))} <small>(${effectiveness}&times;)</small></p>`;
+			} else if (effectiveness > 1) {
+				text += `<p><span class="effectiveness-icon">&#x29BF;</span> <strong>Super effective</strong> vs. ${BattleLog.escapeHTML(this.getNickname(possibleTarget))} <small>(${effectiveness}&times;)</small></p>`;
+			}
+		}
+
 		return text;
+	}
+	getNickname(pokemon: Pokemon | ServerPokemon) {
+		const ignoreNicks = this.battle.ignoreNicks || this.battle.ignoreOpponent;
+		return ignoreNicks ? Dex.species.get(pokemon.speciesForme).baseSpecies : pokemon.name;
 	}
 
 	/**
@@ -853,8 +875,7 @@ export class BattleTooltips {
 			genderBuf = ` <img src="${Dex.fxPrefix}gender-${gender.toLowerCase()}.png" alt="${gender}" width="7" height="10" class="pixelated" /> `;
 		}
 
-		const ignoreNicks = this.battle.ignoreNicks || this.battle.ignoreOpponent;
-		const nickname = ignoreNicks ? Dex.species.get(pokemon.speciesForme).baseSpecies : pokemon.name;
+		const nickname = this.getNickname(pokemon);
 		let name = BattleLog.escapeHTML(nickname);
 		if (pokemon.speciesForme !== nickname) {
 			name += ` <small>(${BattleLog.escapeHTML(pokemon.speciesForme)})</small>`;
@@ -893,8 +914,10 @@ export class BattleTooltips {
 			text += `<p class="tooltip-section"><strong>Possible Illusion #${illusionIndex}</strong>${levelBuf}</p>`;
 		}
 
-		if (pokemon.fainted) {
-			text += '<p><small>HP:</small> (fainted)</p>';
+		if (pokemon.fainted && pokemon.maxhp === 100) {
+			text += `<p><small>HP:</small> (fainted)</p>`;
+		} else if (pokemon.fainted) {
+			text += `<p><small>HP:</small> <span class="gray">0/${pokemon.maxhp} (fainted)</span></p>`;
 		} else if (this.battle.hardcoreMode) {
 			if (serverPokemon) {
 				const status = pokemon.status ? ` <span class="status ${pokemon.status}">${pokemon.status.toUpperCase()}</span>` : '';
@@ -993,6 +1016,14 @@ export class BattleTooltips {
 				text += `${moveName}<br />`;
 			}
 			text += '</p>';
+		} else if (this.battle.hardcoreMode && clientPokemon?.side.openTeamSheet && clientPokemon.moveTrack.length) {
+			// move list (open team sheet, no PP usage shown)
+			text += `<p class="tooltip-section">`;
+			for (const [moveName] of clientPokemon.moveTrack) {
+				const move = this.battle.dex.moves.get(moveName);
+				text += `&#8226; ${move.name}<br />`;
+			}
+			text += `</p>`;
 		} else if (!this.battle.hardcoreMode && clientPokemon?.moveTrack.length) {
 			// move list (guessed)
 			text += `<p class="tooltip-section">`;
@@ -1006,8 +1037,8 @@ export class BattleTooltips {
 			}).length > 4) {
 				text += `(More than 4 moves is usually a sign of Illusion Zoroark/Zorua.) `;
 			}
-			if (this.battle.gen === 3) {
-				text += `(Pressure is not visible in Gen 3, so in certain situations, more PP may have been lost than shown here.) `;
+			if (this.battle.gen === 3 && clientPokemon.moveTrack.some(([_, pp]) => typeof pp !== 'number')) {
+				text += `(Pressure is not visible in Gen 3, so in certain situations, the exact amount of PP used may be unknown.) `;
 			}
 			if (this.pokemonHasClones(clientPokemon)) {
 				text += `(Your opponent has two indistinguishable Pokémon, making it impossible for you to tell which one has which moves/ability/item.) `;
@@ -1055,7 +1086,7 @@ export class BattleTooltips {
 	}
 
 	calculateModifiedStats(clientPokemon: Pokemon | null, serverPokemon: ServerPokemon, statStagesOnly?: boolean) {
-		let stats = {...serverPokemon.stats};
+		let stats = { ...serverPokemon.stats };
 		let pokemon = clientPokemon || serverPokemon;
 		const isPowerTrick = clientPokemon?.volatiles['powertrick'];
 		for (const statName of Dex.statNamesExceptHP) {
@@ -1266,8 +1297,8 @@ export class BattleTooltips {
 					return highest + 1;
 				}
 
-				const result = speciesData.id === 'phione'
-					? 1 : calcEviolite(this.battle.dex, speciesData);
+				const result = speciesData.id === 'phione' ?
+					1 : calcEviolite(this.battle.dex, speciesData);
 				if (result > 0) {
 					stats.def = Math.floor(stats.def * (1 + result * 0.5));
 					stats.spd = Math.floor(stats.spd * (1 + result * 0.5));
@@ -1518,7 +1549,7 @@ export class BattleTooltips {
 		return buf;
 	}
 
-	getPPUseText(moveTrackRow: [string, number], showKnown?: boolean) {
+	getPPUseText(moveTrackRow: [string, PPState], showKnown?: boolean) {
 		let [moveName, ppUsed] = moveTrackRow;
 		let move;
 		let maxpp;
@@ -1536,7 +1567,11 @@ export class BattleTooltips {
 			return `${bullet} ${move.name} <small>(0/${maxpp})</small>`;
 		}
 		if (ppUsed || moveName.startsWith('*')) {
-			return `${bullet} ${move.name} <small>(${maxpp - ppUsed}/${maxpp})</small>`;
+			if (typeof ppUsed === 'number') {
+				return `${bullet} ${move.name} <small>(${maxpp - ppUsed}/${maxpp})</small>`;
+			} else {
+				return `${bullet} ${move.name} <small>(${maxpp - ppUsed[0]}/${maxpp} to ${maxpp - ppUsed[1]}/${maxpp})</small>`;
+			}
 		}
 		return `${bullet} ${move.name} ${showKnown ? ' <small>(revealed)</small>' : ''}`;
 	}
@@ -1613,7 +1648,7 @@ export class BattleTooltips {
 	 */
 	getMoveType(
 		move: Dex.Move, value: ModifiableValue, forMaxMove?: boolean | Dex.Move
-	): [Dex.TypeName, 'Physical' | 'Special' | 'Status'] {
+	): [Dex.TypeName, Dex.CategoryName] {
 		const pokemon = value.pokemon;
 		const serverPokemon = value.serverPokemon;
 
@@ -1649,26 +1684,30 @@ export class BattleTooltips {
 			if (value.itemModify(0)) moveType = item.naturalGift.type;
 		}
 		// Weather and pseudo-weather type changes.
-		if (move.id === 'weatherball' && value.weatherModify(0)) {
-			switch (this.battle.weather) {
-			case 'sunnyday':
-			case 'desolateland':
-				if (item.id === 'utilityumbrella') break;
+		if (move.id === 'weatherball') {
+			if (value.weatherModify(0)) {
+				switch (this.battle.weather) {
+				case 'sunnyday':
+				case 'desolateland':
+					if (item.id === 'utilityumbrella') break;
+					moveType = 'Fire';
+					break;
+				case 'raindance':
+				case 'primordialsea':
+					if (item.id === 'utilityumbrella') break;
+					moveType = 'Water';
+					break;
+				case 'sandstorm':
+					moveType = 'Rock';
+					break;
+				case 'hail':
+				case 'snowscape':
+				case 'glacialstorm':
+					moveType = 'Ice';
+					break;
+				}
+			} else if (value.abilityModify(0, 'Mega Sol')) {
 				moveType = 'Fire';
-				break;
-			case 'raindance':
-			case 'primordialsea':
-				if (item.id === 'utilityumbrella') break;
-				moveType = 'Water';
-				break;
-			case 'sandstorm':
-				moveType = 'Rock';
-				break;
-			case 'hail':
-			case 'snowscape':
-			case 'glacialstorm':
-				moveType = 'Ice';
-				break;
 			}
 		}
 		if (move.id === 'terrainpulse' && pokemon.isGrounded(serverPokemon)) {
@@ -1696,32 +1735,32 @@ export class BattleTooltips {
 		// Raging Bull's type depends on the Tauros forme
 		if (move.id === 'ragingbull') {
 			switch (pokemon.getSpeciesForme()) {
-				case 'Tauros-Paldea-Combat':
-					moveType = 'Fighting';
-					break;
-				case 'Tauros-Paldea-Blaze':
-					moveType = 'Fire';
-					break;
-				case 'Tauros-Paldea-Aqua':
-					moveType = 'Water';
-					break;
+			case 'Tauros-Paldea-Combat':
+				moveType = 'Fighting';
+				break;
+			case 'Tauros-Paldea-Blaze':
+				moveType = 'Fire';
+				break;
+			case 'Tauros-Paldea-Aqua':
+				moveType = 'Water';
+				break;
 			}
 		}
 		// Ivy Cudgel's type depends on the Ogerpon forme
 		if (move.id === 'ivycudgel') {
 			switch (pokemon.getSpeciesForme()) {
-				case 'Ogerpon-Wellspring':
-				case 'Ogerpon-Wellspring-Tera':
-					moveType = 'Water';
-					break;
-				case 'Ogerpon-Hearthflame':
-				case 'Ogerpon-Hearthflame-Tera':
-					moveType = 'Fire';
-					break;
-				case 'Ogerpon-Cornerstone':
-				case 'Ogerpon-Cornerstone-Tera':
-					moveType = 'Rock';
-					break;
+			case 'Ogerpon-Wellspring':
+			case 'Ogerpon-Wellspring-Tera':
+				moveType = 'Water';
+				break;
+			case 'Ogerpon-Hearthflame':
+			case 'Ogerpon-Hearthflame-Tera':
+				moveType = 'Fire';
+				break;
+			case 'Ogerpon-Cornerstone':
+			case 'Ogerpon-Cornerstone-Tera':
+				moveType = 'Rock';
+				break;
 			}
 		}
 
@@ -1743,6 +1782,7 @@ export class BattleTooltips {
 			if (category !== 'Status' && !move.isZ && !move.id.startsWith('hiddenpower')) {
 				if (moveType === 'Normal') {
 					if (value.abilityModify(0, 'Aerilate')) moveType = 'Flying';
+					if (value.abilityModify(0, 'Dragonize')) moveType = 'Dragon';
 					if (value.abilityModify(0, 'Galvanize')) moveType = 'Electric';
 					if (value.abilityModify(0, 'Pixilate')) moveType = 'Fairy';
 					if (value.abilityModify(0, 'Refrigerate')) moveType = 'Ice';
@@ -1815,6 +1855,224 @@ export class BattleTooltips {
 			}
 		}
 		return [moveType, category];
+	}
+	static getTypeAbilityWeakness(attackType: Dex.TypeName, abilityid: ID, dex: ModdedDex = Dex, strict?: boolean) {
+		if (attackType === 'Ground' && abilityid === 'levitate') return 0;
+		if (attackType === 'Water' && abilityid === 'dryskin') return 0;
+		if (attackType === 'Fire' && abilityid === 'flashfire') return 0;
+		if (attackType === 'Electric' && abilityid === 'lightningrod' && dex.gen >= 5) return 0;
+		if (attackType === 'Grass' && abilityid === 'sapsipper') return 0;
+		if (attackType === 'Electric' && abilityid === 'motordrive') return 0;
+		if (attackType === 'Water' && abilityid === 'stormdrain' && dex.gen >= 5) return 0;
+		if (attackType === 'Electric' && abilityid === 'voltabsorb') return 0;
+		if (attackType === 'Water' && abilityid === 'waterabsorb') return 0;
+		if (attackType === 'Ground' && abilityid === 'eartheater') return 0;
+		if (attackType === 'Fire' && abilityid === 'wellbakedbody') return 0;
+
+		if (attackType === 'Fire' && abilityid === 'primordialsea' && !strict) return 0;
+		if (attackType === 'Water' && abilityid === 'desolateland' && !strict) return 0;
+
+		let factor = 1;
+		if ((attackType === 'Fire' || attackType === 'Ice') && abilityid === 'thickfat') factor *= 0.5;
+		if (attackType === 'Fire' && abilityid === 'waterbubble') factor *= 0.5;
+		if (attackType === 'Fire' && abilityid === 'heatproof') factor *= 0.5;
+		if (attackType === 'Ghost' && abilityid === 'purifyingsalt') factor *= 0.5;
+		if (attackType === 'Fire' && abilityid === 'fluffy') factor *= 2;
+		if ((attackType === 'Electric' || attackType === 'Rock' || attackType === 'Ice') && abilityid === 'deltastream') {
+			factor *= 0.5;
+		}
+		return factor;
+	}
+	getMoveEffectiveness(
+		source: Pokemon, move: Dex.Move, attackType: Dex.TypeName, category: Dex.CategoryName, target: Pokemon
+	): number | null {
+		if (([
+			'adjacentAlly', 'adjacentAllyOrSelf', 'self', 'allySide', 'foeSide', 'all',
+		] satisfies Dex.MoveTarget[] as Dex.MoveTarget[]).includes(move.target)) {
+			return 1;
+		}
+		const hardcoreMode = this.battle.hardcoreMode;
+		const targetTypes = target.getTypeList();
+		const sourceAbility = source.effectiveAbility();
+		// Mold Breaker doesn't ignore _everything_, but it sure ignores everything that affects effectiveness
+		const targetAbility = hardcoreMode || [
+			'Mold Breaker', 'Teravolt', 'Turboblaze',
+		].includes(sourceAbility) ? '' : target.effectiveAbility();
+		const dex = this.battle.dex;
+		const priority = move.priority + (category === 'Status' && sourceAbility === 'Prankster' ? 1 : 0);
+
+		if (hardcoreMode && (move.category === 'Status' || dex.gen < 7)) {
+			return null;
+		}
+
+		let inflictsStatus = null;
+		let inflictsEffect = null;
+		if (category === 'Status') {
+			if (['thunderwave', 'glare', 'stunspore'].includes(move.id)) inflictsStatus = 'par';
+			if (['toxic', 'poisonpowder'].includes(move.id)) inflictsStatus = 'psn';
+			if ([
+				'spore', 'sleeppowder', 'hypnosis', 'sing', 'lovelykiss', 'darkvoid', 'yawn',
+			].includes(move.id)) inflictsStatus = 'slp';
+			if (move.id === 'willowisp') inflictsStatus = 'brn';
+			if (['block', 'meanlook', 'spiderweb'].includes(move.id)) inflictsEffect = 'trapped';
+			if (['confuseray', 'supersonic'].includes(move.id)) inflictsEffect = 'confusion';
+		}
+
+		/** any factor that's "effectiveness-like" rather than literal type effectiveness */
+		let otherFactor = BattleTooltips.getTypeAbilityWeakness(attackType, toID(targetAbility), dex, true);
+		let factor = 1;
+		if (!otherFactor && targetAbility === "Levitate") {
+			otherFactor = 1;
+			if (!target.isGrounded() && move.id !== 'thousandarrows' && !hardcoreMode) {
+				factor = 0; // Levitate acts as a type-based immunity (doesn't affect most status moves)
+			}
+		}
+		for (const targetType of targetTypes) {
+			const tType = dex.types.get(targetType);
+
+			// special type immunities
+			if (inflictsStatus && tType.damageTaken?.[(inflictsStatus || inflictsEffect) as 'trapped'] === Dex.IMMUNE) {
+				if (!(inflictsStatus === 'psn' && sourceAbility === 'Corrosion')) {
+					return 0;
+				}
+			}
+			if (category === 'Status' && sourceAbility === 'Prankster' && tType.damageTaken?.['prankster'] === Dex.IMMUNE) {
+				return 0;
+			}
+			if (move.flags['powder'] && tType.damageTaken?.['powder'] === Dex.IMMUNE) otherFactor = 0;
+			if (move.flags['powder'] && targetAbility === 'Overcoat' && dex.gen >= 6) otherFactor = 0;
+			if (move.flags['sound'] && targetAbility === 'Soundproof') otherFactor = 0;
+			if (move.flags['bullet'] && targetAbility === 'Bulletproof') otherFactor = 0;
+
+			// regular type effectiveness
+			if (tType.damageTaken?.[attackType] === Dex.IMMUNE) {
+				if (target.item === 'Ring Target') continue;
+				if (targetType === 'Ghost' && (sourceAbility === "Scrappy" || sourceAbility === "Mind's Eye")) continue;
+				if (targetType === 'Ghost' && (target.volatiles['foresight'] || target.volatiles['odorsleuth'])) continue;
+				if (targetType === 'Dark' && (target.volatiles['miracleeye'])) continue;
+				if (targetType === 'Flying' && target.isGrounded()) continue;
+				if (targetType === 'Flying' && move.id === 'thousandarrows' && !target.isGrounded()) {
+					factor = 1;
+					break;
+				}
+				factor = 0;
+			} else if (move.id === 'freezedry' && targetType === 'Water') {
+				factor *= 2;
+			} else {
+				factor *= [1, 2, 0.5, 0][tType.damageTaken?.[attackType] || 0] ?? 1;
+			}
+			if (move.id === 'sheercold' && targetType === 'Ice') otherFactor = 0;
+		}
+
+		// Air Balloon etc. Levitate is already handled but there are a few that aren't
+		if (category !== 'Status' && attackType === 'Ground' && factor && !target.isGrounded()) otherFactor = 0;
+		if (this.battle.hasPseudoWeather('Misty Terrain') && target.isGrounded() && inflictsStatus) {
+			return 0;
+		}
+		if (this.battle.hasPseudoWeather('Psychic Terrain') && target.isGrounded() && priority > 0) {
+			otherFactor = 0;
+		}
+		if (this.battle.weather === 'primordialsea' && attackType === 'Fire') {
+			otherFactor = 0;
+		}
+		if (this.battle.weather === 'desolateland' && attackType === 'Water') {
+			otherFactor = 0;
+		}
+
+		// status immunities
+		if (target.status && inflictsStatus) return 0;
+		if (targetAbility === "Comatose" && inflictsStatus) return 0;
+		if (targetAbility === "Purifying Salt" && inflictsStatus) return 0;
+		if (targetAbility === "Shields Down" && target.speciesForme === 'Minior-Meteor' && inflictsStatus) return 0;
+		if (targetAbility === "Leaf Guard" && this.battle.weather === 'sunnyday' && inflictsStatus) return 0;
+		if (targetAbility === "Sweet Veil" && inflictsStatus === 'slp') return 0;
+		if (targetAbility === "Pastel Veil" && inflictsStatus === 'psn') return 0;
+		if (["Water Veil", "Water Bubble", "Thermal Exchange"].includes(targetAbility) && inflictsStatus === 'brn') return 0;
+
+		if (targetAbility === 'Wonder Guard' && factor < 2 && category !== 'Status') otherFactor = 0;
+		if (targetAbility === "Good as Gold" && category === 'Status') return 0;
+		if (targetAbility === "Own Tempo" && inflictsEffect === 'confusion') return 0;
+		if (sourceAbility === 'Tinted Lens' && factor < 1) otherFactor *= 2;
+		if (targetAbility === 'Sturdy' && move.ohko) otherFactor = 0;
+		if (targetAbility === 'Damp' && [
+			'explosion', 'mindblown', 'mistyexplosion', 'selfdestruct',
+		].includes(move.id)) otherFactor = 0;
+		if (targetAbility === 'Aroma Veil' && [
+			'disable', 'encore', 'healblock', 'taunt', 'torment', 'attract',
+		].includes(move.id)) return 0;
+
+		if (category === 'Status') {
+			if (!move.flags['bypasssub'] && target.volatiles['substitute'] && sourceAbility !== 'Infiltrator') return 0;
+			if (move.id === 'thunderwave') return factor * otherFactor === 0 ? 0 : null;
+			return otherFactor === 0 ? 0 : null;
+		}
+
+		if (
+			// static amount, OHKO
+			move.damage || move.ohko ||
+			// countering
+			move.id === 'comeuppance' || move.id === 'counter' || move.id === 'mirrorcoat' || move.id === 'metalburst' ||
+			// special
+			move.id === 'endeavor' || move.id === 'bide' || move.id === 'ruination' || move.id === 'superfang' ||
+			move.id === 'finalgambit' || move.id === 'guardianofalola' || move.id === 'naturesmadness' || move.id === 'psywave'
+		) {
+			if (hardcoreMode) return null;
+			return factor * otherFactor === 0 ? 0 : 1;
+		}
+		if (hardcoreMode && dex.gen <= 9) {
+			if (factor > 2) return 2;
+			if (factor < 0.5) return 0.5;
+			return factor;
+		}
+		if (hardcoreMode) return factor;
+		return factor * otherFactor;
+	}
+	getMoveTypeText(move: Dex.Move, value: ModifiableValue, forMaxMove?: boolean | Dex.Move) {
+		const [moveType, category] = this.getMoveType(move, value, forMaxMove);
+
+		const pokemon = value.pokemon;
+		let foeActive = [...pokemon.side.foe.active].reverse();
+		if (this.battle.gameType === 'freeforall') {
+			foeActive = [...foeActive, ...pokemon.side.active].filter(active => active !== pokemon);
+		}
+
+		if (this.battle.hardcoreMode) {
+			let tags = '';
+			for (const possibleTarget of foeActive) {
+				if (!possibleTarget) continue;
+				const effectiveness = this.getMoveEffectiveness(pokemon, move, moveType, category, possibleTarget);
+
+				if (effectiveness === null) {
+					break;
+				} if (effectiveness === 0) {
+					tags += `\u00D7`;
+				} else if (effectiveness < 0.5) {
+					tags += `\u25BC`;
+				} else if (effectiveness < 1) {
+					tags += `\u25B3`;
+				} else if (effectiveness > 2) {
+					tags += `\u2605`;
+				} else if (effectiveness > 1) {
+					tags += `\u29BF`;
+				} else {
+					tags += `\u25CB`;
+				}
+			}
+
+			return [moveType, tags] as const;
+		}
+
+		let tags = '\u00D7';
+		for (const possibleTarget of foeActive) {
+			if (!possibleTarget) continue;
+			const effectiveness = this.getMoveEffectiveness(pokemon, move, moveType, category, possibleTarget);
+			if (effectiveness !== 0) {
+				tags = '';
+				break;
+			}
+		}
+
+		return [moveType, tags] as const;
 	}
 
 	// Gets the current accuracy for a move.
@@ -1936,6 +2194,7 @@ export class BattleTooltips {
 		value.set(move.accuracy as number);
 
 		if (move.id === 'hurricane' || move.id === 'thunder') {
+			if (value.tryAbility('Mega Sol')) value.set(50, 'Mega Sol');
 			if (value.tryWeather('Sunny Day')) value.set(50, 'Sunny Day');
 			if (value.tryWeather('Desolate Land')) value.set(50, 'Desolate Land');
 		}
@@ -2045,7 +2304,8 @@ export class BattleTooltips {
 			value.set(20 + 20 * boostCount);
 		}
 		if (move.id === 'trumpcard') {
-			const ppLeft = 5 - this.ppUsed(move, pokemon);
+			const pp = this.ppUsed(move, pokemon);
+			const ppLeft = 5 - (typeof pp === 'number' ? pp : pp[1]);
 			let basePower = 40;
 			if (ppLeft === 1) basePower = 200;
 			else if (ppLeft === 2) basePower = 80;
@@ -2067,6 +2327,7 @@ export class BattleTooltips {
 			}
 		}
 		if (move.id === 'weatherball') {
+			value.abilityModify(2, "Mega Sol");
 			if (this.battle.weather !== 'deltastream') {
 				value.weatherModify(2);
 			}
@@ -2229,7 +2490,8 @@ export class BattleTooltips {
 		) {
 			if (move.type === 'Normal') {
 				value.abilityModify(this.battle.gen > 6 ? 1.2 : 1.3, "Aerilate");
-				value.abilityModify(this.battle.gen > 6 ? 1.2 : 1.3, "Galvanize");
+				value.abilityModify(1.2, "Dragonize");
+				value.abilityModify(1.2, "Galvanize");
 				value.abilityModify(this.battle.gen > 6 ? 1.2 : 1.3, "Pixilate");
 				value.abilityModify(this.battle.gen > 6 ? 1.2 : 1.3, "Refrigerate");
 			}
@@ -2697,7 +2959,7 @@ export class BattleStatGuesser {
 		let abilityid = toID(set.ability);
 
 		let species = this.dex.species.get(set.species || set.name!);
-		if (item.megaEvolves === species.name) species = this.dex.species.get(item.megaStone);
+		if (item.megaStone?.[species.name]) species = this.dex.species.get(item.megaStone[species.name]);
 		if (!species.exists) return '?';
 		let stats = species.baseStats;
 
@@ -2712,6 +2974,7 @@ export class BattleStatGuesser {
 
 		for (let i = 0, len = set.moves.length; i < len; i++) {
 			let move = this.dex.moves.get(set.moves[i]);
+			if (!move.exists) continue;
 			hasMove[move.id] = 1;
 			if (move.category === 'Status') {
 				if (['batonpass', 'healingwish', 'lunardance'].includes(move.id)) {
@@ -3267,7 +3530,7 @@ export function BattleStatOptimizer(set: Dex.PokemonSet, formatid: ID) {
 		return ~~(val);
 	};
 
-	const origNature = BattleNatures[set.nature || 'Serious'];
+	const origNature = BattleNatures[set.nature!] ?? BattleNatures['Serious'];
 	const origStats = {
 		// no need to calculate hp
 		atk: getStat('atk', set.evs.atk || 0, origNature),
