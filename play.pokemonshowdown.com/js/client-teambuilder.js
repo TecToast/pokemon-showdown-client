@@ -2,7 +2,7 @@
 
 	// this is a useful global
 	var teams;
-	const MOD_IDS = ['batzi', 'dml', 'mnm']
+	const MOD_IDS = ['batzi', 'dml', 'mnm', 'htcyd']
 
 	exports.TeambuilderRoom = exports.Room.extend({
 		type: 'teambuilder',

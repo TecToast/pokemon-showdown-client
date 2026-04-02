@@ -4,7 +4,8 @@
 const MODDED_FORMATS = {
 	9.81: 'batzi',
 	9.82: 'dml',
-	9.83: 'mnm'
+	9.83: 'mnm',
+	9.84: 'htcyd',
 }
 
 const fs = require("fs");
@@ -280,7 +281,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 	const STADIUM = [2.04, 1.04];
 	const NATDEX = [9.1, 8.1];
 	const OTHER = [
-		9.9, 9.81, 9.82, 9.83, 9.6, 9.411, 9.41, 9.401, 9.4, 9.33, 9.2, -9.4, -9.401,
+		9.9, ...Object.keys(MODDED_FORMATS), 9.6, 9.411, 9.41, 9.401, 9.4, 9.33, 9.2, -9.4, -9.401,
 		8.6, 8.4, 8.2, 8.1, -8.4, -8.6,
 		7.1,
 		5.1,
@@ -1053,7 +1054,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		BattleTeambuilderTable[modName].learnsets = {};
 		for (const id in ModdedLearnsets) {
 			const species = Dex.mod(modName).species.get(id);
-			if (species.isNonstandard && !['Unobtainable', 'CAP', 'Past', 'Future'].includes(species.isNonstandard)) continue;
+			if (species.isNonstandard && !['Unobtainable', 'CAP', 'Past', 'Future'].includes(species.isNonstandard) && species.isNonstandard.toLowerCase() !== moddedFormat) continue;
 			const learnset = ModdedLearnsets[id].learnset;
 			BattleTeambuilderTable[modName].learnsets[id] = {};
 			for (const moveid in learnset) {
@@ -1429,7 +1430,11 @@ process.stdout.write("Building `data/pokedex.js`... ");
 	fs.writeFileSync('play.pokemonshowdown.com/data/pokedex.json', JSON.stringify(Pokedex));
 
 	for (const moddedFormat of Object.values(MODDED_FORMATS)) {
-		const moddedChanges = requireNoCache(`../caches/pokemon-showdown/dist/data/mods/gen9${moddedFormat}/pokedex.js`).Pokedex;
+		const pathSpec = `../caches/pokemon-showdown/dist/data/mods/gen9${moddedFormat}/pokedex.js`;
+		if(!fs.existsSync(pathSpec)) {
+			continue;
+		}
+		const moddedChanges = requireNoCache(pathSpec).Pokedex;
 		fs.writeFileSync(`play.pokemonshowdown.com/data/pokedex${moddedFormat}changes.json`, JSON.stringify(moddedChanges));
 	}
 
@@ -1455,7 +1460,11 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
 	fs.writeFileSync('play.pokemonshowdown.com/data/moves.js', buf);
 	fs.writeFileSync('play.pokemonshowdown.com/data/moves.json', JSON.stringify(Moves));
 	for (const moddedFormat of Object.values(MODDED_FORMATS)) {
-		const moddedChanges = requireNoCache(`../caches/pokemon-showdown/dist/data/mods/gen9${moddedFormat}/moves.js`).Moves;
+		const pathSpec = `../caches/pokemon-showdown/dist/data/mods/gen9${moddedFormat}/moves.js`;
+		if(!fs.existsSync(pathSpec)) {
+			continue;
+		}
+		const moddedChanges = requireNoCache(pathSpec).Moves;
 		fs.writeFileSync(`play.pokemonshowdown.com/data/moves${moddedFormat}changes.json`, JSON.stringify(moddedChanges));
 	}
 }

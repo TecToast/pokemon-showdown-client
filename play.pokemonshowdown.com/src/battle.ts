@@ -3546,7 +3546,7 @@ export class Battle {
 				this.dex = Dex.mod('gen9legendsou' as ID);
 			}
 			// MODDING
-			for (const modName of ['Batzi', 'DML', 'MNM']) {
+			for (const modName of ['Batzi', 'DML', 'MNM', 'HTCYD']) {
 				if (this.tier.includes(modName)) {
 					this.dex = Dex.mod(`gen9${modName}`.toLowerCase() as ID);
 				}
