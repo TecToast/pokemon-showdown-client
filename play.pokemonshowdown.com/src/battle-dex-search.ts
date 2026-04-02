@@ -11,7 +11,7 @@
  * @license MIT
  */
 
-import {Dex, type ModdedDex, toID, type ID} from "./battle-dex";
+import { Dex, type ModdedDex, toID, type ID } from "./battle-dex";
 
 export type SearchType = (
 	'pokemon' | 'type' | 'tier' | 'move' | 'item' | 'ability' | 'egggroup' | 'category' | 'article'
@@ -28,8 +28,8 @@ declare const BattleSearchIndex: [ID, SearchType, number?, number?][];
 declare const BattleSearchIndexOffset: any;
 declare const BattleTeambuilderTable: any;
 
-const MOD_IDS = ['batzi', 'dml', 'mnm']
-type ModFormatType = 'batzi' | 'dml' | 'mnm'
+const MOD_IDS = ['batzi', 'dml', 'mnm', 'htcyd'];
+type ModFormatType = 'batzi' | 'dml' | 'mnm' | 'htcyd';
 
 /**
  * Backend for search UIs.
@@ -93,18 +93,18 @@ export class DexSearch {
 	getTypedSearch(searchType: SearchType | '', format = '' as ID, speciesOrSet: ID | Dex.PokemonSet = '' as ID) {
 		if (!searchType) return null;
 		switch (searchType) {
-			case 'pokemon':
-				return new BattlePokemonSearch('pokemon', format, speciesOrSet);
-			case 'item':
-				return new BattleItemSearch('item', format, speciesOrSet);
-			case 'move':
-				return new BattleMoveSearch('move', format, speciesOrSet);
-			case 'ability':
-				return new BattleAbilitySearch('ability', format, speciesOrSet);
-			case 'type':
-				return new BattleTypeSearch('type', format, speciesOrSet);
-			case 'category':
-				return new BattleCategorySearch('category', format, speciesOrSet);
+		case 'pokemon':
+			return new BattlePokemonSearch('pokemon', format, speciesOrSet);
+		case 'item':
+			return new BattleItemSearch('item', format, speciesOrSet);
+		case 'move':
+			return new BattleMoveSearch('move', format, speciesOrSet);
+		case 'ability':
+			return new BattleAbilitySearch('ability', format, speciesOrSet);
+		case 'type':
+			return new BattleTypeSearch('type', format, speciesOrSet);
+		case 'category':
+			return new BattleCategorySearch('category', format, speciesOrSet);
 		}
 		return null;
 	}
@@ -312,8 +312,8 @@ export class DexSearch {
 			let matchLength = query.length - 1;
 			if (!i) i++;
 			while (matchLength &&
-			BattleSearchIndex[i][0].substr(0, matchLength) !== query.substr(0, matchLength) &&
-			BattleSearchIndex[i - 1][0].substr(0, matchLength) !== query.substr(0, matchLength)) {
+				BattleSearchIndex[i][0].substr(0, matchLength) !== query.substr(0, matchLength) &&
+				BattleSearchIndex[i - 1][0].substr(0, matchLength) !== query.substr(0, matchLength)) {
 				matchLength--;
 			}
 			let matchQuery = query.substr(0, matchLength);
@@ -491,47 +491,47 @@ export class DexSearch {
 		let illegal = this.typedSearch?.illegalReasons;
 		if (searchType === 'pokemon') {
 			switch (fType) {
-				case 'type':
-					let type = fId.charAt(0).toUpperCase() + fId.slice(1) as Dex.TypeName;
-					buf.push(['header', `${type}-type Pok\u00e9mon`]);
-					for (let id in BattlePokedex) {
-						if (!BattlePokedex[id].types) continue;
-						if (this.dex.species.get(id).types.includes(type)) {
-							(illegal && id in illegal ? illegalBuf : buf).push(['pokemon', id as ID]);
-						}
+			case 'type':
+				let type = fId.charAt(0).toUpperCase() + fId.slice(1) as Dex.TypeName;
+				buf.push(['header', `${type}-type Pok\u00e9mon`]);
+				for (let id in BattlePokedex) {
+					if (!BattlePokedex[id].types) continue;
+					if (this.dex.species.get(id).types.includes(type)) {
+						(illegal && id in illegal ? illegalBuf : buf).push(['pokemon', id as ID]);
 					}
-					break;
-				case 'ability':
-					let ability = Dex.abilities.get(fId).name;
-					buf.push(['header', `${ability} Pok\u00e9mon`]);
-					for (let id in BattlePokedex) {
-						if (!BattlePokedex[id].abilities) continue;
-						if (Dex.hasAbility(this.dex.species.get(id), ability)) {
-							(illegal && id in illegal ? illegalBuf : buf).push(['pokemon', id as ID]);
-						}
+				}
+				break;
+			case 'ability':
+				let ability = Dex.abilities.get(fId).name;
+				buf.push(['header', `${ability} Pok\u00e9mon`]);
+				for (let id in BattlePokedex) {
+					if (!BattlePokedex[id].abilities) continue;
+					if (Dex.hasAbility(this.dex.species.get(id), ability)) {
+						(illegal && id in illegal ? illegalBuf : buf).push(['pokemon', id as ID]);
 					}
-					break;
+				}
+				break;
 			}
 		} else if (searchType === 'move') {
 			switch (fType) {
-				case 'type':
-					let type = fId.charAt(0).toUpperCase() + fId.slice(1);
-					buf.push(['header', `${type}-type moves`]);
-					for (let id in BattleMovedex) {
-						if (BattleMovedex[id].type === type) {
-							(illegal && id in illegal ? illegalBuf : buf).push(['move', id as ID]);
-						}
+			case 'type':
+				let type = fId.charAt(0).toUpperCase() + fId.slice(1);
+				buf.push(['header', `${type}-type moves`]);
+				for (let id in BattleMovedex) {
+					if (BattleMovedex[id].type === type) {
+						(illegal && id in illegal ? illegalBuf : buf).push(['move', id as ID]);
 					}
-					break;
-				case 'category':
-					let category = fId.charAt(0).toUpperCase() + fId.slice(1);
-					buf.push(['header', `${category} moves`]);
-					for (let id in BattleMovedex) {
-						if (BattleMovedex[id].category === category) {
-							(illegal && id in illegal ? illegalBuf : buf).push(['move', id as ID]);
-						}
+				}
+				break;
+			case 'category':
+				let category = fId.charAt(0).toUpperCase() + fId.slice(1);
+				buf.push(['header', `${category} moves`]);
+				for (let id in BattleMovedex) {
+					if (BattleMovedex[id].category === category) {
+						(illegal && id in illegal ? illegalBuf : buf).push(['move', id as ID]);
 					}
-					break;
+				}
+				break;
 			}
 		}
 		return [...buf, ...illegalBuf];
@@ -909,7 +909,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			let learnset = table.learnsets[learnsetid];
 			const eggMovesOnly = this.eggMovesOnly(learnsetid, speciesid);
 			if (learnset && (moveid in learnset) && (!this.format.startsWith('tradebacks') ? learnset[moveid].includes(genChar) :
-					learnset[moveid].includes(genChar) || (learnset[moveid].includes(`${gen + 1}`) && move.gen === gen)) &&
+				learnset[moveid].includes(genChar) || (learnset[moveid].includes(`${gen + 1}`) && move.gen === gen)) &&
 				(!eggMovesOnly || (learnset[moveid].includes('e') && this.dex.gen === 9))
 			) {
 				return true;
@@ -945,7 +945,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.formatType === 'natdex' ? `gen${gen}natdex` :
 			this.formatType === 'stadium' ? `gen${gen}stadium${gen > 1 ? gen : ''}` :
 			this.formatType === 'legendsza' ? `gen9legendsou` :
-				MOD_IDS.includes(this.formatType!) ? `gen9${this.formatType}` :
+			MOD_IDS.includes(this.formatType!) ? `gen9${this.formatType}` :
 			`gen${gen}`;
 		if (table?.[tableKey]) {
 			table = table[tableKey];
@@ -1001,41 +1001,41 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 		let results: SearchRow[] = [];
 		for (let id in BattlePokedex) {
 			switch (id) {
-				case 'bulbasaur':
-					results.push(['header', "Generation 1"]);
-					break;
-				case 'chikorita':
-					results.push(['header', "Generation 2"]);
-					break;
-				case 'treecko':
-					results.push(['header', "Generation 3"]);
-					break;
-				case 'turtwig':
-					results.push(['header', "Generation 4"]);
-					break;
-				case 'victini':
-					results.push(['header', "Generation 5"]);
-					break;
-				case 'chespin':
-					results.push(['header', "Generation 6"]);
-					break;
-				case 'rowlet':
-					results.push(['header', "Generation 7"]);
-					break;
-				case 'grookey':
-					results.push(['header', "Generation 8"]);
-					break;
-				case 'sprigatito':
-					results.push(['header', "Generation 9"]);
-					break;
-				case 'missingno':
-					results.push(['header', "Glitch"]);
-					break;
-				case 'syclar':
-					results.push(['header', "CAP"]);
-					break;
-				case 'pikachucosplay':
-					continue;
+			case 'bulbasaur':
+				results.push(['header', "Generation 1"]);
+				break;
+			case 'chikorita':
+				results.push(['header', "Generation 2"]);
+				break;
+			case 'treecko':
+				results.push(['header', "Generation 3"]);
+				break;
+			case 'turtwig':
+				results.push(['header', "Generation 4"]);
+				break;
+			case 'victini':
+				results.push(['header', "Generation 5"]);
+				break;
+			case 'chespin':
+				results.push(['header', "Generation 6"]);
+				break;
+			case 'rowlet':
+				results.push(['header', "Generation 7"]);
+				break;
+			case 'grookey':
+				results.push(['header', "Generation 8"]);
+				break;
+			case 'sprigatito':
+				results.push(['header', "Generation 9"]);
+				break;
+			case 'missingno':
+				results.push(['header', "Glitch"]);
+				break;
+			case 'syclar':
+				results.push(['header', "CAP"]);
+				break;
+			case 'pikachucosplay':
+				continue;
 			}
 			results.push(['pokemon', id as ID]);
 		}
@@ -1054,7 +1054,7 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 		let table = BattleTeambuilderTable;
 		if ((format.endsWith('cap') || format.endsWith('caplc')) && dex.gen < 9) {
 			table = table[`gen${dex.gen}`];
-		} else if(MOD_IDS.includes(this.formatType!)) {
+		} else if (MOD_IDS.includes(this.formatType!)) {
 			table = table[`gen9${this.formatType}`];
 		} else if (isVGCOrBS) {
 			table = table[`gen${dex.gen}vgc`];
@@ -1257,20 +1257,20 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 		const species = this.dex.species.get(row[1]);
 		for (const [filterType, value] of filters) {
 			switch (filterType) {
-				case 'type':
-					if (species.types[0] !== value && species.types[1] !== value) return false;
-					break;
-				case 'egggroup':
-					if (species.eggGroups[0] !== value && species.eggGroups[1] !== value) return false;
-					break;
-				case 'tier':
-					if (this.getTier(species) !== value) return false;
-					break;
-				case 'ability':
-					if (!Dex.hasAbility(species, value)) return false;
-					break;
-				case 'move':
-					if (!this.canLearn(species.id, value as ID)) return false;
+			case 'type':
+				if (species.types[0] !== value && species.types[1] !== value) return false;
+				break;
+			case 'egggroup':
+				if (species.eggGroups[0] !== value && species.eggGroups[1] !== value) return false;
+				break;
+			case 'tier':
+				if (this.getTier(species) !== value) return false;
+				break;
+			case 'ability':
+				if (!Dex.hasAbility(species, value)) return false;
+				break;
+			case 'move':
+				if (!this.canLearn(species.id, value as ID)) return false;
 			}
 		}
 		return true;
@@ -1386,9 +1386,9 @@ class BattleAbilitySearch extends BattleTypedSearch<'ability'> {
 		const ability = this.dex.abilities.get(row[1]);
 		for (const [filterType, value] of filters) {
 			switch (filterType) {
-				case 'pokemon':
-					if (!Dex.hasAbility(this.dex.species.get(value), ability.name)) return false;
-					break;
+			case 'pokemon':
+				if (!Dex.hasAbility(this.dex.species.get(value), ability.name)) return false;
+				break;
 			}
 		}
 		return true;
@@ -1502,11 +1502,11 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		results.push(['header', "Moves"]);
 		for (let id in BattleMovedex) {
 			switch (id) {
-				case 'paleowave':
-					results.push(['header', "CAP moves"]);
-					break;
-				case 'magikarpsrevenge':
-					continue;
+			case 'paleowave':
+				results.push(['header', "CAP moves"]);
+				break;
+			case 'magikarpsrevenge':
+				continue;
 			}
 			results.push(['move', id as ID]);
 		}
@@ -1542,38 +1542,38 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 
 			// Not useless only when certain moves aren't present
 			switch (id) {
-				case 'bubblebeam':
-					return (!moves.includes('surf') && !moves.includes('blizzard'));
-				case 'doubleedge':
-					return !moves.includes('bodyslam');
-				case 'doublekick':
-					return !moves.includes('submission');
-				case 'firepunch':
-					return !moves.includes('fireblast');
-				case 'megadrain':
-					return !moves.includes('razorleaf') && !moves.includes('surf');
-				case 'megakick':
-					return !moves.includes('hyperbeam');
-				case 'reflect':
-					return !moves.includes('barrier') && !moves.includes('acidarmor');
-				case 'stomp':
-					return !moves.includes('headbutt');
-				case 'submission':
-					return !moves.includes('highjumpkick');
-				case 'thunderpunch':
-					return !moves.includes('thunderbolt');
-				case 'triattack':
-					return !moves.includes('bodyslam');
+			case 'bubblebeam':
+				return (!moves.includes('surf') && !moves.includes('blizzard'));
+			case 'doubleedge':
+				return !moves.includes('bodyslam');
+			case 'doublekick':
+				return !moves.includes('submission');
+			case 'firepunch':
+				return !moves.includes('fireblast');
+			case 'megadrain':
+				return !moves.includes('razorleaf') && !moves.includes('surf');
+			case 'megakick':
+				return !moves.includes('hyperbeam');
+			case 'reflect':
+				return !moves.includes('barrier') && !moves.includes('acidarmor');
+			case 'stomp':
+				return !moves.includes('headbutt');
+			case 'submission':
+				return !moves.includes('highjumpkick');
+			case 'thunderpunch':
+				return !moves.includes('thunderbolt');
+			case 'triattack':
+				return !moves.includes('bodyslam');
 			}
 			// Useful and Useless moves for Stadium OU, which changes many game mechanics.
 			if (this.formatType === 'stadium') {
 				if (['doubleedge', 'focusenergy', 'haze'].includes(id)) return true;
 				if (['hyperbeam', 'sing', 'hypnosis'].includes(id)) return false;
 				switch (id) {
-					case 'fly':
-						return !moves.includes('drillpeck');
-					case 'dig':
-						return !moves.includes('earthquake');
+				case 'fly':
+					return !moves.includes('drillpeck');
+				case 'dig':
+					return !moves.includes('earthquake');
 				}
 			}
 		}
@@ -1592,185 +1592,185 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		if (itemid === 'glalitite') abilityid = 'refrigerate' as ID;
 
 		switch (id) {
-			case 'fakeout':
-			case 'flamecharge':
-			case 'nuzzle':
-			case 'poweruppunch':
-			case 'trailblaze':
-				return abilityid !== 'sheerforce';
-			case 'solarbeam':
-			case 'solarblade':
-				return ['desolateland', 'drought', 'chlorophyll', 'orichalcumpulse'].includes(abilityid) || itemid === 'powerherb';
-			case 'dynamicpunch':
-			case 'grasswhistle':
-			case 'inferno':
-			case 'sing':
-				return abilityid === 'noguard';
-			case 'heatcrash':
-			case 'heavyslam':
-				return species.weightkg >= (species.evos ? 75 : 130);
-			case 'aerialace':
-				return ['technician', 'toughclaws'].includes(abilityid) && !moves.includes('bravebird');
-			case 'ancientpower':
-				return ['serenegrace', 'technician'].includes(abilityid) || !moves.includes('powergem');
-			case 'aquajet':
-				return !moves.includes('jetpunch');
-			case 'aurawheel':
-				return species.baseSpecies === 'Morpeko';
-			case 'axekick':
-				return !moves.includes('highjumpkick');
-			case 'barrier':
-				return !moves.includes('acidarmor');
-			case 'bellydrum':
-				return moves.includes('aquajet') || moves.includes('jetpunch') || moves.includes('extremespeed') ||
-					['iceface', 'unburden'].includes(abilityid);
-			case 'bulletseed':
-				return ['skilllink', 'technician'].includes(abilityid);
-			case 'chillingwater':
-				return !moves.includes('scald');
-			case 'counter':
-			case 'mirrorcoat':
-				return species.baseStats.hp >= 65;
-			case 'dazzlinggleam':
-				return !moves.includes('alluringvoice') || this.formatType?.includes('doubles');
-			case 'darkvoid':
-				return dex.gen < 7;
-			case 'dualwingbeat':
-				return abilityid === 'technician' || !moves.includes('drillpeck');
-			case 'electroshot':
-				return true;
-			case 'feint':
-				return abilityid === 'refrigerate';
-			case 'futuresight':
-				return dex.gen > 5;
-			case 'grassyglide':
-				return abilityid === 'grassysurge';
-			case 'gyroball':
-				return species.baseStats.spe <= 60;
-			case 'headbutt':
-				return abilityid === 'serenegrace';
-			case 'hex':
-				return !moves.includes('infernalparade');
-			case 'hiddenpowerelectric':
-				return !(dex.gen < 4 && moves.includes('thunderpunch')) && !moves.includes('thunderbolt');
-			case 'hiddenpowerfighting':
-				return !(dex.gen < 4 && moves.includes('brickbreak')) && !moves.includes('aurasphere') && !moves.includes('focusblast');
-			case 'hiddenpowerfire':
-				return !(dex.gen < 4 && moves.includes('firepunch')) && !moves.includes('flamethrower') &&
-					!moves.includes('mysticalfire') && !moves.includes('burningjealousy');
-			case 'hiddenpowergrass':
-				return !(dex.gen < 4 && moves.includes('leafblade')) ||
-					(dex.gen > 3 && !moves.includes('energyball') && !moves.includes('grassknot') && !moves.includes('gigadrain'));
-			case 'hiddenpowerice':
-				return !moves.includes('icebeam') && (dex.gen < 4 && !moves.includes('icepunch')) ||
-					(dex.gen > 5 && !moves.includes('aurorabeam') && !moves.includes('glaciate'));
-			case 'hiddenpowerflying':
-				return dex.gen < 4 && !moves.includes('drillpeck');
-			case 'hiddenpowerbug':
-				return dex.gen < 4 && !moves.includes('megahorn');
-			case 'hiddenpowerpsychic':
-				return species.baseSpecies === 'Unown';
-			case 'hyperspacefury':
-				return species.id === 'hoopaunbound';
-			case 'hypnosis':
-				return (dex.gen < 4 && !moves.includes('sleeppowder')) || (dex.gen > 6 && abilityid === 'baddreams');
-			case 'icepunch':
-				return !moves.includes('icespinner') || ['sheerforce', 'ironfist'].includes(abilityid) || itemid === 'punchingglove';
-			case 'iciclecrash':
-				return !moves.includes('mountaingale');
-			case 'iciclespear':
-				return dex.gen > 3;
-			case 'icywind':
-				// Keldeo needs Hidden Power for Electric/Ghost
-				return species.baseSpecies === 'Keldeo' || this.isDoubles;
-			case 'infestation':
-				return moves.includes('stickyweb');
-			case 'irondefense':
-				return !moves.includes('acidarmor') && !moves.includes('barrier');
-			case 'irontail':
-				return dex.gen > 5 && !moves.includes('ironhead') && !moves.includes('gunkshot') && !moves.includes('poisonjab');
-			case 'jumpkick':
-				return !moves.includes('highjumpkick') && !moves.includes('axekick');
-			case 'lastresort':
-				return set && set.moves.length < 3;
-			case 'leafblade':
-				return true;
-			case 'leechlife':
-				return dex.gen > 6;
-			case 'magiccoat':
-				return dex.gen > 3;
-			case 'meteorbeam':
-				return true;
-			case 'mysticalfire':
-				return dex.gen > 6 && !moves.includes('flamethrower');
-			case 'naturepower':
-				return dex.gen === 5;
-			case 'needlearm':
-				return dex.gen < 4;
-			case 'nightslash':
-				return !moves.includes('crunch') && !(moves.includes('knockoff') && dex.gen >= 6);
-			case 'outrage':
-				return dex.gen > 3 && !moves.includes('glaiverush');
-			case 'petaldance':
-				return abilityid === 'owntempo';
-			case 'phantomforce':
-				return (!moves.includes('poltergeist') && !moves.includes('shadowclaw')) || this.isDoubles;
-			case 'poisonfang':
-				return species.types.includes('Poison') && !moves.includes('gunkshot') && !moves.includes('poisonjab');
-			case 'raindance':
-				return dex.gen < 4;
-			case 'relicsong':
-				return species.id === 'meloetta';
-			case 'refresh':
-				return !moves.includes('aromatherapy') && !moves.includes('healbell');
-			case 'risingvoltage':
-				return abilityid === 'electricsurge' || abilityid === 'hadronengine';
-			case 'rocktomb':
-				return abilityid === 'technician';
-			case 'selfdestruct':
-				return dex.gen < 5 && !moves.includes('explosion');
-			case 'shadowpunch':
-				return abilityid === 'ironfist' && !moves.includes('ragefist');
-			case 'shelter':
-				return !moves.includes('acidarmor') && !moves.includes('irondefense');
-			case 'skyuppercut':
-				return dex.gen < 4;
-			case 'smackdown':
-				return species.types.includes('Ground');
-			case 'smartstrike':
-				return species.types.includes('Steel') && !moves.includes('ironhead');
-			case 'soak':
-				return abilityid === 'unaware';
-			case 'steelwing':
-				return !moves.includes('ironhead');
-			case 'stompingtantrum':
-				return (!moves.includes('earthquake') && !moves.includes('drillrun')) || this.isDoubles;
-			case 'stunspore':
-				return !moves.includes('thunderwave');
-			case 'sunnyday':
-				return dex.gen < 4;
-			case 'technoblast':
-				return dex.gen > 5 && itemid.endsWith('drive') || itemid === 'dousedrive';
-			case 'teleport':
-				return dex.gen > 7;
-			case 'temperflare':
-				return (!moves.includes('flareblitz') && !moves.includes('pyroball') && !moves.includes('sacredfire') &&
-					!moves.includes('bitterblade') && !moves.includes('firepunch')) || this.isDoubles;
-			case 'terrainpulse':
-			case 'waterpulse':
-				return ['megalauncher', 'technician'].includes(abilityid) && !moves.includes('originpulse');
-			case 'thief':
-				return dex.gen === 2;
-			case 'toxicspikes':
-				return abilityid !== 'toxicdebris';
-			case 'triattack':
-				return dex.gen > 3;
-			case 'trickroom':
-				return species.baseStats.spe <= 100;
-			case 'wildcharge':
-				return !moves.includes('supercellslam');
-			case 'zapcannon':
-				return abilityid === 'noguard' || (dex.gen < 4 && !moves.includes('thunderwave'));
+		case 'fakeout':
+		case 'flamecharge':
+		case 'nuzzle':
+		case 'poweruppunch':
+		case 'trailblaze':
+			return abilityid !== 'sheerforce';
+		case 'solarbeam':
+		case 'solarblade':
+			return ['desolateland', 'drought', 'chlorophyll', 'orichalcumpulse'].includes(abilityid) || itemid === 'powerherb';
+		case 'dynamicpunch':
+		case 'grasswhistle':
+		case 'inferno':
+		case 'sing':
+			return abilityid === 'noguard';
+		case 'heatcrash':
+		case 'heavyslam':
+			return species.weightkg >= (species.evos ? 75 : 130);
+		case 'aerialace':
+			return ['technician', 'toughclaws'].includes(abilityid) && !moves.includes('bravebird');
+		case 'ancientpower':
+			return ['serenegrace', 'technician'].includes(abilityid) || !moves.includes('powergem');
+		case 'aquajet':
+			return !moves.includes('jetpunch');
+		case 'aurawheel':
+			return species.baseSpecies === 'Morpeko';
+		case 'axekick':
+			return !moves.includes('highjumpkick');
+		case 'barrier':
+			return !moves.includes('acidarmor');
+		case 'bellydrum':
+			return moves.includes('aquajet') || moves.includes('jetpunch') || moves.includes('extremespeed') ||
+				['iceface', 'unburden'].includes(abilityid);
+		case 'bulletseed':
+			return ['skilllink', 'technician'].includes(abilityid);
+		case 'chillingwater':
+			return !moves.includes('scald');
+		case 'counter':
+		case 'mirrorcoat':
+			return species.baseStats.hp >= 65;
+		case 'dazzlinggleam':
+			return !moves.includes('alluringvoice') || this.formatType?.includes('doubles');
+		case 'darkvoid':
+			return dex.gen < 7;
+		case 'dualwingbeat':
+			return abilityid === 'technician' || !moves.includes('drillpeck');
+		case 'electroshot':
+			return true;
+		case 'feint':
+			return abilityid === 'refrigerate';
+		case 'futuresight':
+			return dex.gen > 5;
+		case 'grassyglide':
+			return abilityid === 'grassysurge';
+		case 'gyroball':
+			return species.baseStats.spe <= 60;
+		case 'headbutt':
+			return abilityid === 'serenegrace';
+		case 'hex':
+			return !moves.includes('infernalparade');
+		case 'hiddenpowerelectric':
+			return !(dex.gen < 4 && moves.includes('thunderpunch')) && !moves.includes('thunderbolt');
+		case 'hiddenpowerfighting':
+			return !(dex.gen < 4 && moves.includes('brickbreak')) && !moves.includes('aurasphere') && !moves.includes('focusblast');
+		case 'hiddenpowerfire':
+			return !(dex.gen < 4 && moves.includes('firepunch')) && !moves.includes('flamethrower') &&
+				!moves.includes('mysticalfire') && !moves.includes('burningjealousy');
+		case 'hiddenpowergrass':
+			return !(dex.gen < 4 && moves.includes('leafblade')) ||
+				(dex.gen > 3 && !moves.includes('energyball') && !moves.includes('grassknot') && !moves.includes('gigadrain'));
+		case 'hiddenpowerice':
+			return !moves.includes('icebeam') && (dex.gen < 4 && !moves.includes('icepunch')) ||
+				(dex.gen > 5 && !moves.includes('aurorabeam') && !moves.includes('glaciate'));
+		case 'hiddenpowerflying':
+			return dex.gen < 4 && !moves.includes('drillpeck');
+		case 'hiddenpowerbug':
+			return dex.gen < 4 && !moves.includes('megahorn');
+		case 'hiddenpowerpsychic':
+			return species.baseSpecies === 'Unown';
+		case 'hyperspacefury':
+			return species.id === 'hoopaunbound';
+		case 'hypnosis':
+			return (dex.gen < 4 && !moves.includes('sleeppowder')) || (dex.gen > 6 && abilityid === 'baddreams');
+		case 'icepunch':
+			return !moves.includes('icespinner') || ['sheerforce', 'ironfist'].includes(abilityid) || itemid === 'punchingglove';
+		case 'iciclecrash':
+			return !moves.includes('mountaingale');
+		case 'iciclespear':
+			return dex.gen > 3;
+		case 'icywind':
+			// Keldeo needs Hidden Power for Electric/Ghost
+			return species.baseSpecies === 'Keldeo' || this.isDoubles;
+		case 'infestation':
+			return moves.includes('stickyweb');
+		case 'irondefense':
+			return !moves.includes('acidarmor') && !moves.includes('barrier');
+		case 'irontail':
+			return dex.gen > 5 && !moves.includes('ironhead') && !moves.includes('gunkshot') && !moves.includes('poisonjab');
+		case 'jumpkick':
+			return !moves.includes('highjumpkick') && !moves.includes('axekick');
+		case 'lastresort':
+			return set && set.moves.length < 3;
+		case 'leafblade':
+			return true;
+		case 'leechlife':
+			return dex.gen > 6;
+		case 'magiccoat':
+			return dex.gen > 3;
+		case 'meteorbeam':
+			return true;
+		case 'mysticalfire':
+			return dex.gen > 6 && !moves.includes('flamethrower');
+		case 'naturepower':
+			return dex.gen === 5;
+		case 'needlearm':
+			return dex.gen < 4;
+		case 'nightslash':
+			return !moves.includes('crunch') && !(moves.includes('knockoff') && dex.gen >= 6);
+		case 'outrage':
+			return dex.gen > 3 && !moves.includes('glaiverush');
+		case 'petaldance':
+			return abilityid === 'owntempo';
+		case 'phantomforce':
+			return (!moves.includes('poltergeist') && !moves.includes('shadowclaw')) || this.isDoubles;
+		case 'poisonfang':
+			return species.types.includes('Poison') && !moves.includes('gunkshot') && !moves.includes('poisonjab');
+		case 'raindance':
+			return dex.gen < 4;
+		case 'relicsong':
+			return species.id === 'meloetta';
+		case 'refresh':
+			return !moves.includes('aromatherapy') && !moves.includes('healbell');
+		case 'risingvoltage':
+			return abilityid === 'electricsurge' || abilityid === 'hadronengine';
+		case 'rocktomb':
+			return abilityid === 'technician';
+		case 'selfdestruct':
+			return dex.gen < 5 && !moves.includes('explosion');
+		case 'shadowpunch':
+			return abilityid === 'ironfist' && !moves.includes('ragefist');
+		case 'shelter':
+			return !moves.includes('acidarmor') && !moves.includes('irondefense');
+		case 'skyuppercut':
+			return dex.gen < 4;
+		case 'smackdown':
+			return species.types.includes('Ground');
+		case 'smartstrike':
+			return species.types.includes('Steel') && !moves.includes('ironhead');
+		case 'soak':
+			return abilityid === 'unaware';
+		case 'steelwing':
+			return !moves.includes('ironhead');
+		case 'stompingtantrum':
+			return (!moves.includes('earthquake') && !moves.includes('drillrun')) || this.isDoubles;
+		case 'stunspore':
+			return !moves.includes('thunderwave');
+		case 'sunnyday':
+			return dex.gen < 4;
+		case 'technoblast':
+			return dex.gen > 5 && itemid.endsWith('drive') || itemid === 'dousedrive';
+		case 'teleport':
+			return dex.gen > 7;
+		case 'temperflare':
+			return (!moves.includes('flareblitz') && !moves.includes('pyroball') && !moves.includes('sacredfire') &&
+				!moves.includes('bitterblade') && !moves.includes('firepunch')) || this.isDoubles;
+		case 'terrainpulse':
+		case 'waterpulse':
+			return ['megalauncher', 'technician'].includes(abilityid) && !moves.includes('originpulse');
+		case 'thief':
+			return dex.gen === 2;
+		case 'toxicspikes':
+			return abilityid !== 'toxicdebris';
+		case 'triattack':
+			return dex.gen > 3;
+		case 'trickroom':
+			return species.baseStats.spe <= 100;
+		case 'wildcharge':
+			return !moves.includes('supercellslam');
+		case 'zapcannon':
+			return abilityid === 'noguard' || (dex.gen < 4 && !moves.includes('thunderwave'));
 		}
 
 		if (this.isDoubles && BattleMoveSearch.GOOD_DOUBLES_MOVES.includes(id)) {
@@ -1835,7 +1835,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		let gen = `${dex.gen}`;
 		let lsetTable = BattleTeambuilderTable;
 		if (this.formatType?.startsWith('bdsp')) lsetTable = lsetTable['gen8bdsp'];
-		for(const modId of MOD_IDS) {
+		for (const modId of MOD_IDS) {
 			if (this.formatType?.startsWith(modId)) {
 				lsetTable = lsetTable[`gen9${modId}`];
 			}
@@ -1853,7 +1853,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 				for (let moveid in learnset) {
 					let learnsetEntry = learnset[moveid];
 					const move = dex.moves.get(moveid);
-					const minGenCode: { [gen: number]: string } = {6: 'p', 7: 'q', 8: 'g', 9: 'a'};
+					const minGenCode: { [gen: number]: string } = { 6: 'p', 7: 'q', 8: 'g', 9: 'a' };
 					if (regionBornLegality && !learnsetEntry.includes(minGenCode[dex.gen])) {
 						continue;
 					}
@@ -2008,15 +2008,15 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		const move = this.dex.moves.get(row[1]);
 		for (const [filterType, value] of filters) {
 			switch (filterType) {
-				case 'type':
-					if (move.type !== value) return false;
-					break;
-				case 'category':
-					if (move.category !== value) return false;
-					break;
-				case 'pokemon':
-					if (!this.canLearn(value as ID, move.id)) return false;
-					break;
+			case 'type':
+				if (move.type !== value) return false;
+				break;
+			case 'category':
+				if (move.category !== value) return false;
+				break;
+			case 'pokemon':
+				if (!this.canLearn(value as ID, move.id)) return false;
+				break;
 			}
 		}
 		return true;
@@ -2025,42 +2025,42 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 	sort(results: SearchRow[], sortCol: string, reverseSort?: boolean): SearchRow[] {
 		const sortOrder = reverseSort ? -1 : 1;
 		switch (sortCol) {
-			case 'power':
-				let powerTable: { [id: string]: number | undefined } = {
-					return: 102, frustration: 102, spitup: 300, trumpcard: 200, naturalgift: 80, grassknot: 120,
-					lowkick: 120, gyroball: 150, electroball: 150, flail: 200, reversal: 200, present: 120,
-					wringout: 120, crushgrip: 120, heatcrash: 120, heavyslam: 120, fling: 130, magnitude: 150,
-					beatup: 24, punishment: 1020, psywave: 1250, nightshade: 1200, seismictoss: 1200,
-					dragonrage: 1140, sonicboom: 1120, superfang: 1350, endeavor: 1399, sheercold: 1501,
-					fissure: 1500, horndrill: 1500, guillotine: 1500,
-				};
-				return results.sort(([rowType1, id1], [rowType2, id2]) => {
-					let move1 = this.dex.moves.get(id1);
-					let move2 = this.dex.moves.get(id2);
-					let pow1 = move1.basePower || powerTable[id1] || (move1.category === 'Status' ? -1 : 1400);
-					let pow2 = move2.basePower || powerTable[id2] || (move2.category === 'Status' ? -1 : 1400);
-					return (pow2 - pow1) * sortOrder;
-				});
-			case 'accuracy':
-				return results.sort(([rowType1, id1], [rowType2, id2]) => {
-					let accuracy1 = this.dex.moves.get(id1).accuracy || 0;
-					let accuracy2 = this.dex.moves.get(id2).accuracy || 0;
-					if (accuracy1 === true) accuracy1 = 101;
-					if (accuracy2 === true) accuracy2 = 101;
-					return (accuracy2 - accuracy1) * sortOrder;
-				});
-			case 'pp':
-				return results.sort(([rowType1, id1], [rowType2, id2]) => {
-					let pp1 = this.dex.moves.get(id1).pp || 0;
-					let pp2 = this.dex.moves.get(id2).pp || 0;
-					return (pp2 - pp1) * sortOrder;
-				});
-			case 'name':
-				return results.sort(([rowType1, id1], [rowType2, id2]) => {
-					const name1 = id1;
-					const name2 = id2;
-					return (name1 < name2 ? -1 : name1 > name2 ? 1 : 0) * sortOrder;
-				});
+		case 'power':
+			let powerTable: { [id: string]: number | undefined } = {
+				return: 102, frustration: 102, spitup: 300, trumpcard: 200, naturalgift: 80, grassknot: 120,
+				lowkick: 120, gyroball: 150, electroball: 150, flail: 200, reversal: 200, present: 120,
+				wringout: 120, crushgrip: 120, heatcrash: 120, heavyslam: 120, fling: 130, magnitude: 150,
+				beatup: 24, punishment: 1020, psywave: 1250, nightshade: 1200, seismictoss: 1200,
+				dragonrage: 1140, sonicboom: 1120, superfang: 1350, endeavor: 1399, sheercold: 1501,
+				fissure: 1500, horndrill: 1500, guillotine: 1500,
+			};
+			return results.sort(([rowType1, id1], [rowType2, id2]) => {
+				let move1 = this.dex.moves.get(id1);
+				let move2 = this.dex.moves.get(id2);
+				let pow1 = move1.basePower || powerTable[id1] || (move1.category === 'Status' ? -1 : 1400);
+				let pow2 = move2.basePower || powerTable[id2] || (move2.category === 'Status' ? -1 : 1400);
+				return (pow2 - pow1) * sortOrder;
+			});
+		case 'accuracy':
+			return results.sort(([rowType1, id1], [rowType2, id2]) => {
+				let accuracy1 = this.dex.moves.get(id1).accuracy || 0;
+				let accuracy2 = this.dex.moves.get(id2).accuracy || 0;
+				if (accuracy1 === true) accuracy1 = 101;
+				if (accuracy2 === true) accuracy2 = 101;
+				return (accuracy2 - accuracy1) * sortOrder;
+			});
+		case 'pp':
+			return results.sort(([rowType1, id1], [rowType2, id2]) => {
+				let pp1 = this.dex.moves.get(id1).pp || 0;
+				let pp2 = this.dex.moves.get(id2).pp || 0;
+				return (pp2 - pp1) * sortOrder;
+			});
+		case 'name':
+			return results.sort(([rowType1, id1], [rowType2, id2]) => {
+				const name1 = id1;
+				const name2 = id2;
+				return (name1 < name2 ? -1 : name1 > name2 ? 1 : 0) * sortOrder;
+			});
 		}
 		throw new Error("invalid sortcol");
 	}
@@ -2068,7 +2068,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 
 class BattleCategorySearch extends BattleTypedSearch<'category'> {
 	getTable() {
-		return {physical: 1, special: 1, status: 1};
+		return { physical: 1, special: 1, status: 1 };
 	}
 
 	getDefaultResults(reverseSort?: boolean): SearchRow[] {

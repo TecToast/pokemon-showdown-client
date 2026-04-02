@@ -608,21 +608,22 @@ export class BattleTooltips {
 				}
 				if (move.id === 'weatherball') {
 					switch (this.battle.weather) {
-						case 'sunnyday':
-						case 'desolateland':
-							zMove = this.battle.dex.moves.get(BattleTooltips.zMoveTable['Fire']);
-							break;
-						case 'raindance':
-						case 'primordialsea':
-							zMove = this.battle.dex.moves.get(BattleTooltips.zMoveTable['Water']);
-							break;
-						case 'sandstorm':
-							zMove = this.battle.dex.moves.get(BattleTooltips.zMoveTable['Rock']);
-							break;
-						case 'hail':
-						case 'snowscape':
-							zMove = this.battle.dex.moves.get(BattleTooltips.zMoveTable['Ice']);
-							break;
+					case 'sunnyday':
+					case 'desolateland':
+						zMove = this.battle.dex.moves.get(BattleTooltips.zMoveTable['Fire']);
+						break;
+					case 'raindance':
+					case 'primordialsea':
+						zMove = this.battle.dex.moves.get(BattleTooltips.zMoveTable['Water']);
+						break;
+					case 'sandstorm':
+						zMove = this.battle.dex.moves.get(BattleTooltips.zMoveTable['Rock']);
+						break;
+					case 'hail':
+					case 'snowscape':
+					case 'glacialstorm':
+						zMove = this.battle.dex.moves.get(BattleTooltips.zMoveTable['Ice']);
+						break;
 					}
 				}
 				move = new Move(zMove.id, zMove.name, {
@@ -1178,13 +1179,13 @@ export class BattleTooltips {
 			if (this.battle.gen >= 4 && this.pokemonHasType(pokemon, 'Rock') && weather === 'sandstorm') {
 				stats.spd = Math.floor(stats.spd * 1.5);
 			}
-			if (this.pokemonHasType(pokemon, 'Ice') && weather === 'snowscape') {
+			if (this.pokemonHasType(pokemon, 'Ice') && (weather === 'snowscape' || weather === 'glacialstorm')) {
 				stats.def = Math.floor(stats.def * 1.5);
 			}
 			if (ability === 'sandrush' && weather === 'sandstorm') {
 				speedModifiers.push(2);
 			}
-			if (ability === 'slushrush' && (weather === 'hail' || weather === 'snowscape')) {
+			if (ability === 'slushrush' && (weather === 'hail' || weather === 'snowscape' || weather === 'glacialstorm')) {
 				speedModifiers.push(2);
 			}
 			if (item !== 'utilityumbrella') {
@@ -1650,23 +1651,24 @@ export class BattleTooltips {
 		// Weather and pseudo-weather type changes.
 		if (move.id === 'weatherball' && value.weatherModify(0)) {
 			switch (this.battle.weather) {
-				case 'sunnyday':
-				case 'desolateland':
-					if (item.id === 'utilityumbrella') break;
-					moveType = 'Fire';
-					break;
-				case 'raindance':
-				case 'primordialsea':
-					if (item.id === 'utilityumbrella') break;
-					moveType = 'Water';
-					break;
-				case 'sandstorm':
-					moveType = 'Rock';
-					break;
-				case 'hail':
-				case 'snowscape':
-					moveType = 'Ice';
-					break;
+			case 'sunnyday':
+			case 'desolateland':
+				if (item.id === 'utilityumbrella') break;
+				moveType = 'Fire';
+				break;
+			case 'raindance':
+			case 'primordialsea':
+				if (item.id === 'utilityumbrella') break;
+				moveType = 'Water';
+				break;
+			case 'sandstorm':
+				moveType = 'Rock';
+				break;
+			case 'hail':
+			case 'snowscape':
+			case 'glacialstorm':
+				moveType = 'Ice';
+				break;
 			}
 		}
 		if (move.id === 'terrainpulse' && pokemon.isGrounded(serverPokemon)) {
@@ -1828,6 +1830,7 @@ export class BattleTooltips {
 		if (move.id === 'blizzard' && this.battle.gen >= 4) {
 			value.weatherModify(0, 'Hail');
 			value.weatherModify(0, 'Snowscape');
+			value.weatherModify(0, 'Glacial Storm');
 		}
 		if (['hurricane', 'thunder', 'bleakwindstorm', 'wildboltstorm', 'sandsearstorm'].includes(move.id)) {
 			value.weatherModify(0, 'Rain Dance');
@@ -2162,8 +2165,8 @@ export class BattleTooltips {
 		// Base power based on times hit
 		if (move.id === 'ragefist') {
 			value.set(Math.min(350, 50 + (this.isModActive("Batzi") ? 20 : 50) * pokemon.timesAttacked),
-				pokemon.timesAttacked > 0 ? `Hit ${pokemon.timesAttacked} time${pokemon.timesAttacked > 1 ? 's' : ''}`
-					: undefined);
+				pokemon.timesAttacked > 0 ? `Hit ${pokemon.timesAttacked} time${pokemon.timesAttacked > 1 ? 's' : ''}` :
+				undefined);
 		}
 		if (!value.value) return value;
 
@@ -2655,13 +2658,13 @@ export class BattleStatGuesser {
 	guess(set: Dex.PokemonSet) {
 		let role = this.guessRole(set);
 		let comboEVs = this.guessEVs(set, role);
-		let evs = {hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0};
+		let evs = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
 		for (let stat in evs) {
 			evs[stat as Dex.StatName] = comboEVs[stat as Dex.StatName] || 0;
 		}
 		let plusStat = comboEVs.plusStat || '' as const;
 		let minusStat = comboEVs.minusStat || '' as const;
-		return {role, evs, plusStat, minusStat, moveCount: this.moveCount, hasMove: this.hasMove};
+		return { role, evs, plusStat, minusStat, moveCount: this.moveCount, hasMove: this.hasMove };
 	}
 
 	guessRole(set: Dex.PokemonSet) {
@@ -2955,7 +2958,7 @@ export class BattleStatGuesser {
 			diff -= change;
 		}
 		if (diff <= 0) return evTotal;
-		let evPriority = {def: 1, spd: 1, hp: 1, atk: 1, spa: 1, spe: 1};
+		let evPriority = { def: 1, spd: 1, hp: 1, atk: 1, spa: 1, spe: 1 };
 		let prioStat: Dex.StatName;
 		for (prioStat in evPriority) {
 			if (prioStat === stat) continue;
@@ -3028,7 +3031,7 @@ export class BattleStatGuesser {
 
 		if (this.supportsAVs) {
 			// Let's Go, AVs enabled
-			evs = {hp: 200, atk: 200, def: 200, spa: 200, spd: 200, spe: 200};
+			evs = { hp: 200, atk: 200, def: 200, spa: 200, spd: 200, spe: 200 };
 			if (!moveCount['PhysicalAttack']) evs.atk = 0;
 			if (!moveCount['SpecialAttack']) evs.spa = 0;
 			if (hasMove['gyroball'] || hasMove['trickroom']) evs.spe = 0;
@@ -3037,7 +3040,7 @@ export class BattleStatGuesser {
 			// no change
 		} else if (this.ignoreEVLimits) {
 			// Gen 1-2, hackable EVs (like Hackmons)
-			evs = {hp: 252, atk: 252, def: 252, spa: 252, spd: 252, spe: 252};
+			evs = { hp: 252, atk: 252, def: 252, spa: 252, spd: 252, spe: 252 };
 			if (!moveCount['PhysicalAttack']) evs.atk = 0;
 			if (!moveCount['SpecialAttack'] && this.dex.gen > 1) evs.spa = 0;
 			if (hasMove['gyroball'] || hasMove['trickroom']) evs.spe = 0;
@@ -3281,7 +3284,7 @@ export function BattleStatOptimizer(set: Dex.PokemonSet, formatid: ID) {
 		return ev;
 	};
 
-	const origSpread = {evs: set.evs, ...origNature};
+	const origSpread = { evs: set.evs, ...origNature };
 	let origLeftoverEVs = 508;
 	for (const stat of Dex.statNames) {
 		origLeftoverEVs -= origSpread.evs?.[stat] || 0;
@@ -3306,12 +3309,12 @@ export function BattleStatOptimizer(set: Dex.PokemonSet, formatid: ID) {
 	if (!minusTooLow) {
 		for (const stat of Dex.statNamesExceptHP) {
 			if (origStats[stat] < origStats[bestMinus]) {
-				const minEVs = getMinEVs(stat, {minus: stat});
+				const minEVs = getMinEVs(stat, { minus: stat });
 				if (minEVs > 252) continue;
 				// This number can go negative at this point, but we'll make up for it later (and check to make sure)
 				savedEVs = (origSpread.evs[stat] || 0) - minEVs;
 				if (origNature.minus) {
-					savedEVs += (origSpread.evs[origNature.minus] || 0) - getMinEVs(origNature.minus, {minus: stat});
+					savedEVs += (origSpread.evs[origNature.minus] || 0) - getMinEVs(origNature.minus, { minus: stat });
 				}
 				bestMinus = stat;
 				bestMinusMinEVs = minEVs;
@@ -3322,17 +3325,17 @@ export function BattleStatOptimizer(set: Dex.PokemonSet, formatid: ID) {
 		for (const stat of Dex.statNamesExceptHP) {
 			// Don't move the plus to an uninvested stat
 			if (stat !== origNature.plus && origSpread.evs[stat] && stat !== bestMinus) {
-				const minEVs = getMinEVs(stat, {plus: stat});
+				const minEVs = getMinEVs(stat, { plus: stat });
 				let plusEVsSaved = (origNature.minus === stat ? getMinEVs(stat, {}) : origSpread.evs[stat] || 0) - minEVs;
 				if (bestPlus && bestPlus !== bestMinus) {
-					plusEVsSaved += bestPlusMinEVs! - getMinEVs(bestPlus, {plus: stat, minus: bestMinus});
+					plusEVsSaved += bestPlusMinEVs! - getMinEVs(bestPlus, { plus: stat, minus: bestMinus });
 				}
 				if (plusEVsSaved > 0 && savedEVs + plusEVsSaved > 0) {
 					savedEVs += plusEVsSaved;
 					bestPlus = stat;
 					bestPlusMinEVs = minEVs;
 				} else if (plusEVsSaved === 0 && (bestPlus || savedEVs > 0) || plusEVsSaved > 0 && savedEVs + plusEVsSaved === 0) {
-					if (!bestPlus || getStat(stat, getMinEVs(stat, {plus: stat}), {plus: stat}) > origStats[stat]) {
+					if (!bestPlus || getStat(stat, getMinEVs(stat, { plus: stat }), { plus: stat }) > origStats[stat]) {
 						savedEVs += plusEVsSaved;
 						bestPlus = stat;
 						bestPlusMinEVs = minEVs;
@@ -3347,7 +3350,7 @@ export function BattleStatOptimizer(set: Dex.PokemonSet, formatid: ID) {
 			evs: Partial<Dex.StatsTable>,
 			plus?: Dex.StatNameExceptHP,
 			minus?: Dex.StatNameExceptHP,
-		} = {evs: {...origSpread.evs}, plus: bestPlus, minus: bestMinus};
+		} = { evs: { ...origSpread.evs }, plus: bestPlus, minus: bestMinus };
 		if (bestPlus !== origNature.plus || bestMinus !== origNature.minus) {
 			newSpread.evs[bestPlus] = bestPlusMinEVs!;
 			newSpread.evs[bestMinus] = bestMinusMinEVs!;
@@ -3360,7 +3363,7 @@ export function BattleStatOptimizer(set: Dex.PokemonSet, formatid: ID) {
 			for (const stat of Dex.statNames) {
 				if (!newSpread.evs[stat]) delete newSpread.evs[stat];
 			}
-			return {...newSpread, savedEVs};
+			return { ...newSpread, savedEVs };
 		} else if (!plusTooHigh && !minusTooLow) {
 			if (Math.floor(getStat(bestPlus, bestMinusMinEVs!, newSpread) / 11) <= Math.ceil(origStats[bestMinus] / 9)) {
 				// We're not gaining more points from our plus than we're losing to our minus
@@ -3375,7 +3378,7 @@ export function BattleStatOptimizer(set: Dex.PokemonSet, formatid: ID) {
 				for (const stat of Dex.statNames) {
 					if (!newSpread.evs[stat]) delete newSpread.evs[stat];
 				}
-				return {...newSpread, savedEVs};
+				return { ...newSpread, savedEVs };
 			}
 		}
 	}
