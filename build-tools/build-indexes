@@ -15,11 +15,11 @@ const child_process = require("child_process");
 const rootDir = path.resolve(__dirname, '..');
 process.chdir(rootDir);
 
-if (!fs.existsSync('caches/pokemon-showdown')) {
+/*if (!fs.existsSync('caches/pokemon-showdown')) {
 	child_process.execSync('git clone https://github.com/smogon/pokemon-showdown.git', {
 		cwd: 'caches',
 	});
-}
+}*/
 
 process.stdout.write("Syncing data from Git repository... aka doin nothing ");
 // child_process.execSync('git pull', {cwd: 'caches/pokemon-showdown'});
@@ -281,7 +281,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 	const STADIUM = [2.04, 1.04];
 	const NATDEX = [9.1, 8.1];
 	const OTHER = [
-		9.9, ...Object.keys(MODDED_FORMATS), 9.67, 9.6, 9.411, 9.41, 9.401, 9.4, 9.33, 9.2, -9.4, -9.401,
+		9.9, ...Object.keys(MODDED_FORMATS), 9.89, 9.67, 9.6, 9.411, 9.41, 9.401, 9.4, 9.33, 9.2, -9.4, -9.401,
 		8.6, 8.4, 8.2, -8.4, -8.6,
 		7.1,
 		5.1,
@@ -310,6 +310,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		const isBW1 = genIdent === 5.1;
 		const isRS = genIdent === 3.1;
 		const isFRLG = genIdent === 3.11;
+		const isChampionsNatDex = genIdent === 9.89;
 		const gen = (() => {
 			let genStr = 'gen' + genNum;
 			if (isSSDLC1) genStr += 'dlc1';
@@ -325,6 +326,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			if (isFRLG) genStr += 'frlg';
 			if (isChampions) genStr = 'champions';
 			// MODDING
+			if(isChampionsNatDex) genStr = 'champions';
 			if (genIdent in MODDED_FORMATS) {
 				genStr += MODDED_FORMATS[genIdent];
 			}
@@ -351,6 +353,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				if (genIdent in MODDED_FORMATS) {
 					return species.id === 'floetteeternal' ? 'OU' : species.natDexTier;
 				}
+				if(isChampionsNatDex) return Dex.species.get(id).num <= 0 ? 'Illegal' : 'OU';
 				if (isMetBattle) {
 					let tier = species.tier;
 					if (species.isNonstandard) {
@@ -583,6 +586,13 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			BattleTeambuilderTable['champions'].items = items;
 			BattleTeambuilderTable['champions'].overrideTier = overrideTier;
 			BattleTeambuilderTable['champions'].formatSlices = formatSlices;
+		} else if (isChampionsNatDex) {
+			BattleTeambuilderTable['championsnatdex'] = {};
+			BattleTeambuilderTable['championsnatdex'].learnsets = {};
+			BattleTeambuilderTable['championsnatdex'].tiers = tiers;
+			BattleTeambuilderTable['championsnatdex'].items = items;
+			BattleTeambuilderTable['championsnatdex'].overrideTier = overrideTier;
+			BattleTeambuilderTable['championsnatdex'].formatSlices = formatSlices;
 		} else if (isVGC) {
 			BattleTeambuilderTable[gen + 'vgc'] = {};
 			BattleTeambuilderTable[gen + 'vgc'].tiers = tiers;
@@ -717,7 +727,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			if (!(genIdent in MODDED_FORMATS)) {
 				if (!isModdedItem) {
 					if (item.isNonstandard && !isMetBattle) {
-						if (isNatDex) {
+						if (isNatDex || isChampionsNatDex) {
 							let curItem = item;
 							let curGen = genNum;
 							while (curItem.isNonstandard && curGen >= 7) {
@@ -1104,6 +1114,17 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		}
 	}
 	// MODDING
+	for (const id in learnsets) {
+		if(Dex.species.get(id).num <= 0) continue;
+		const baseLearnset = Object.keys(learnsets[id].learnset ?? {});
+		const championLearnset = Object.keys(ChampionsLearnsets[id]?.learnset ?? {})
+		const fullLearnset = [...baseLearnset, ...championLearnset]
+			let newLearnsetObj = {};
+		for (const moveid of fullLearnset) {
+			newLearnsetObj[moveid] = '9a'
+		}
+		BattleTeambuilderTable['championsnatdex'].learnsets[id] = newLearnsetObj
+	}
 	for (const moddedFormat of Object.values(MODDED_FORMATS)) {
 		const modName = `gen9${moddedFormat}`;
 		const ModdedLearnsets = Dex.mod(modName).data.Learnsets;
