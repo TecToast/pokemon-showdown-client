@@ -1115,8 +1115,9 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 	}
 	// MODDING
 	for (const id in learnsets) {
-		if(Dex.species.get(id).num <= 0) continue;
-		const baseLearnset = Object.keys(learnsets[id].learnset ?? {});
+		const dexNum = Dex.species.get(id).num;
+		if(dexNum <= 0) continue;
+		const baseLearnset = Object.keys(learnsets[id] ?? {});
 		const championLearnset = Object.keys(ChampionsLearnsets[id]?.learnset ?? {})
 		const fullLearnset = [...baseLearnset, ...championLearnset]
 			let newLearnsetObj = {};
