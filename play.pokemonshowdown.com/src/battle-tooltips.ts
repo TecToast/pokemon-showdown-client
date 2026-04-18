@@ -1639,7 +1639,7 @@ export class BattleTooltips {
 			max = tr(tr(tr((2 * baseSpe + maxIv) * level / 100 + 5) * maxNature) * tr((70 / 255 / 10 + 1) * 100) / 100);
 			if (tier.includes('No Restrictions')) max += 200;
 			else if (tier.includes('Random')) max += 20;
-		} else if (tier.includes('Champions')) {
+		} else if (tier.includes('Champions') && !tier.includes('NatDex')) {
 			min = tr(minNature * (baseSpe + 20));
 			max = tr(maxNature * (baseSpe + 32 + 20));
 		} else {
