@@ -678,6 +678,7 @@ export const BattlePokemonIconIndexes: { [id: string]: number } = {
 	ramnarok: 1560 + 78,
 	ramnarokradiant: 1560 + 79,
 	flox: 1560 + 80,
+	obliteryx: 1560 + 81,
 
 	// MODDING
 	cinderacemega: 1320 + 80,

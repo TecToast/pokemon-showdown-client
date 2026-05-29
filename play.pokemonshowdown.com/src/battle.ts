@@ -98,6 +98,7 @@ export class Pokemon implements PokemonDetails, PokemonHealth {
 	prevItemEffect = '';
 	terastallized = '';
 	teraType = '';
+	moddedType: Dex.TypeName[] = [];
 
 	boosts: { [stat: string]: number } = {};
 	status: Dex.StatusName | 'tox' | '' | '???' = '';
@@ -542,6 +543,8 @@ export class Pokemon implements PokemonDetails, PokemonHealth {
 			types = [this.terastallized as Dex.TypeName];
 		} else if (this.volatiles.typechange) {
 			types = this.volatiles.typechange[1].split('/');
+		} else if (this.moddedType.length) {
+			types = this.moddedType;
 		} else {
 			types = this.getSpecies(serverPokemon).types;
 		}
@@ -645,11 +648,8 @@ export class Pokemon implements PokemonDetails, PokemonHealth {
 			let ratio = (range[0] + range[1]) / 2;
 			return Math.round(maxWidth * ratio) || 1;
 		}
-		let percentage = Math.ceil(100 * this.hp / this.maxhp);
-		if ((percentage === 100) && (this.hp < this.maxhp)) {
-			percentage = 99;
-		}
-		return percentage * maxWidth / 100;
+		const width = Math.round(this.hp / this.maxhp * maxWidth) || 1;
+		return this.hp < this.maxhp && width === maxWidth ? maxWidth - 1 : width;
 	}
 
 	getHPText(precision = 1) {
@@ -1095,6 +1095,7 @@ export interface ServerPokemon extends PokemonDetails, PokemonHealth {
 	condition: string;
 	active: boolean;
 	reviving: boolean;
+	commanding: boolean;
 	/** unboosted stats */
 	stats: {
 		atk: number,
@@ -2730,6 +2731,10 @@ export class Battle {
 					poke.copyTypesFrom(ofpoke);
 				} else {
 					const types = Dex.sanitizeName(args[3] || '???');
+					// Kind of a hack/hardcode protocol for now due to time constraints, should be expanded upon later
+					if (fromeffect.id.startsWith('format')) {
+						poke.moddedType = types.split('/') as Dex.TypeName[];
+					}
 					poke.removeVolatile('typeadd' as ID);
 					poke.addVolatile('typechange' as ID, types);
 					if (!kwArgs.silent) {
