@@ -13,6 +13,7 @@ declare const POKEMON_SHOWDOWN_TESTCLIENT_KEY: string | undefined;
 export class PSConnection {
 	socket: WebSocket | null = null;
 	connected = false;
+	lastMessageTimeBeforeReconnect = 0;
 	queue: string[] = [];
 	reconnectDelay = 1000;
 	private reconnectCap = 15000;
@@ -68,6 +69,7 @@ export class PSConnection {
 				switch (type) {
 				case 'connected':
 					console.log('\u2705 (CONNECTED via worker)');
+					this.lastMessageTimeBeforeReconnect = parseInt(PS.lastMessageTime) || 0;
 					this.connected = true;
 					if (PS.prefs.avatar) worker.postMessage({ type: 'send', data: `/avatar ${PS.prefs.avatar},1` });
 					this.queue.forEach(msg => worker.postMessage({ type: 'send', data: msg }));
@@ -112,15 +114,16 @@ export class PSConnection {
 		const url = `${server.protocol}://${server.host}${port}${server.prefix}`;
 
 		try {
-			this.socket = new SockJS(url, [], { timeout: 5 * 60 * 1000 });
-		} catch {
 			this.socket = new WebSocket(url.replace('http', 'ws') + '/websocket');
+		} catch {
+			this.socket = new SockJS(url, [], { timeout: 5 * 60 * 1000 });
 		}
 
 		const socket = this.socket!;
 
 		socket.onopen = () => {
 			console.log('\u2705 (CONNECTED)');
+			this.lastMessageTimeBeforeReconnect = parseInt(PS.lastMessageTime) || 0;
 			this.connected = true;
 			this.reconnectDelay = 1000;
 			if (PS.prefs.avatar) socket.send(`/avatar ${PS.prefs.avatar},1`);
@@ -282,6 +285,12 @@ export class PSStorage {
 		switch (data.charAt(0)) {
 		case 'c':
 			Config.server = JSON.parse(data.substr(1));
+			if (location.host === 'localhost.psim.us' || /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\.psim\.us/.test(location.host)) {
+				// normally we assume HTTPS means HTTPS, but make an exception for
+				// localhost and IPs which generally can't have a signed cert anyway.
+				Config.server.port = 8000;
+				(Config.server as any).https = false;
+			}
 			if (Config.server.registered && Config.server.id !== 'showdown' && Config.server.id !== 'smogtours') {
 				const link = document.createElement('link');
 				link.rel = 'stylesheet';

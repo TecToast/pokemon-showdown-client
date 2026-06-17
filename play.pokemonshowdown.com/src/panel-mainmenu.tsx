@@ -7,8 +7,9 @@
 
 import preact from "../js/lib/preact";
 import { PSLoginServer } from "./client-connection";
+import { PSBackground } from "./client-core";
 import { Config, PS, PSRoom, type RoomID, type RoomOptions, type Team } from "./client-main";
-import { PSIcon, PSPanelWrapper, PSRoomPanel } from "./panels";
+import { PSIcon, PSPanelErrorBoundary, PSPanelWrapper, PSRoomPanel } from "./panels";
 import type { BattlesRoom } from "./panel-battle";
 import type { ChatRoom } from "./panel-chat";
 import type { LadderFormatRoom } from "./panel-ladder";
@@ -167,6 +168,10 @@ export class MainMenuRoom extends PSRoom {
 			this.handlePM(user1, user2, message);
 			let sideRoom = PS.rightPanel as ChatRoom;
 			if (sideRoom?.type === "chat" && PS.prefs.inchatpm) sideRoom?.log?.add(args);
+			return;
+		} case 'customgroups': {
+			const [, groupsList] = args;
+			PS.server.parseGroups(groupsList);
 			return;
 		} case 'formats': {
 			this.parseFormats(args);
@@ -497,17 +502,25 @@ class NewsPanel extends PSRoomPanel {
 	static readonly location = 'mini-window';
 	change = (ev: Event) => {
 		const target = ev.currentTarget as HTMLInputElement;
-		if (target.value === '1') {
-			document.cookie = "preactalpha=1; expires=Thu, 1 Jul 2026 12:00:00 UTC; path=/";
+		this.setClient(target.value as '0' | '1' | 'leave');
+	};
+	setClient(setting: '0' | '1' | 'leave') {
+		if (setting === '1') {
+			document.cookie = "preactalpha=1; expires=Thu, 1 Aug 2026 12:00:00 UTC; path=/";
+		} else if (setting === '0') {
+			document.cookie = "preactalpha=0; expires=Thu, 1 Aug 2026 12:00:00 UTC; path=/";
 		} else {
 			document.cookie = "preactalpha=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 		}
-		if (target.value === 'leave') {
+		if (setting === 'leave') {
 			document.location.href = `/`;
 		}
-	};
+	}
+	override componentDidMount() {
+		if (!document.cookie.includes('preactalpha=')) this.setClient('1');
+	}
 	override render() {
-		const cookieSet = document.cookie.includes('preactalpha=1');
+		const cookieSet = !document.cookie.includes('preactalpha=0');
 		return <PSPanelWrapper room={this.props.room} fullSize>
 			<div class="construction">
 				This is the client rewrite beta test.
@@ -537,6 +550,10 @@ class MainMenuPanel extends PSRoomPanel<MainMenuRoom> {
 	static readonly routes = [''];
 	static readonly Model = MainMenuRoom;
 	static readonly icon = <i class="fa fa-home" aria-hidden></i>;
+	override componentDidMount() {
+		super.componentDidMount();
+		this.subscribeTo(PSBackground);
+	}
 	override focus() {
 		this.base?.querySelector<HTMLButtonElement>('.formatselect')?.focus();
 	}
@@ -562,7 +579,7 @@ class MainMenuPanel extends PSRoomPanel<MainMenuRoom> {
 		const draggingRoom = PS.dragging.roomid;
 		if (draggingRoom === null) return;
 
-		const draggedOverRoom = PS.getRoom(e.target as HTMLElement);
+		const draggedOverRoom = PS.getRoom(e.target);
 		if (draggingRoom === draggedOverRoom?.id) return;
 
 		const index = PS.miniRoomList.indexOf(draggedOverRoom?.id as any);
@@ -577,9 +594,7 @@ class MainMenuPanel extends PSRoomPanel<MainMenuRoom> {
 		// if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
 	};
 	renderMiniRoom(room: PSRoom) {
-		const RoomType = PS.roomTypes[room.type];
-		const Panel = RoomType || PSRoomPanel;
-		return <Panel key={room.id} room={room} />;
+		return <PSPanelErrorBoundary key={room.id} room={room} />;
 	}
 	handleClickMinimize = (e: MouseEvent) => {
 		if ((e.target as Element)?.getAttribute('data-cmd')) {
@@ -676,14 +691,14 @@ class MainMenuPanel extends PSRoomPanel<MainMenuRoom> {
 				</button></p>
 			{PS.mainmenu.searchCountdown ? (
 				<>
-					<button class="mainmenu1 mainmenu big button disabled" type="submit"><strong>
+					<button class="mainmenu1 mainmenu big button disabled" disabled><strong>
 						<i class="fa fa-refresh fa-spin" aria-hidden></i> Searching in {PS.mainmenu.searchCountdown.countdown}...
 					</strong></button>
 					<p class="buttonbar"><button class="button" data-cmd="/cancelsearch">Cancel</button></p>
 				</>
 			) : PS.mainmenu.searchingFormat() ? (
 				<>
-					<button class="mainmenu1 mainmenu big button disabled" type="submit">
+					<button class="mainmenu1 mainmenu big button disabled" disabled>
 						<strong><i class="fa fa-refresh fa-spin" aria-hidden></i> Searching...</strong>
 					</button>
 					<p class="buttonbar"><button class="button" data-cmd="/cancelsearch">Cancel</button></p>
@@ -696,11 +711,23 @@ class MainMenuPanel extends PSRoomPanel<MainMenuRoom> {
 			)}
 		</TeamForm>;
 	}
+	renderBackgroundCredit() {
+		const attrib = PSBackground.attrib;
+		if (!attrib) return null;
+		return (
+			<small>
+				<a href={attrib.url} target="_blank" class="subtle">"{attrib.title}" <small>background by {attrib.artist}</small></a>
+			</small>
+		);
+	}
 	override render() {
 		const onlineButton = ' button' + (PS.isOffline ? ' disabled' : '');
 		const tinyLayout = this.props.room.width < 620 ? ' tiny-layout' : '';
 		return <PSPanelWrapper room={this.props.room} onDragEnter={this.handleDragEnter}>
 			<div class={`mainmenu-mini-windows${tinyLayout}`}>
+				{!PS.leftPanelWidth && Config.includes?.mainmenuHTML && (
+					<div dangerouslySetInnerHTML={{ __html: Config.includes.mainmenuHTML }} />
+				)}
 				{this.renderMiniRooms()}
 			</div>
 			<div class={`mainmenu${tinyLayout}`}>
@@ -731,17 +758,47 @@ class MainMenuPanel extends PSRoomPanel<MainMenuRoom> {
 					</div>
 				</div>
 				<div class="mainmenu-footer">
-					<div class="bgcredit"></div>
+					<div class="bgcredit">{this.renderBackgroundCredit()}</div>
 					<small>
 						<a href={`//${Config.routes.dex}/`} target="_blank">Pok&eacute;dex</a> | {}
 						<a href={`//${Config.routes.replays}/`} target="_blank">Replays</a> | {}
+						<a href="//smogon.com/forums/" target="_blank">Forum</a> | {}
 						<a href={`//${Config.routes.root}/rules`} target="_blank">Rules</a> | {}
 						<a href={`//${Config.routes.root}/credits`} target="_blank">Credits</a> | {}
-						<a href="//smogon.com/forums/" target="_blank">Forum</a>
+						<a href={`//${Config.routes.root}/privacy`} target="_blank">Privacy</a>
 					</small>
+					<CCPAIntercept />
 				</div>
 			</div>
 		</PSPanelWrapper>;
+	}
+}
+
+export class CCPAIntercept extends preact.Component {
+	intercepted = false;
+	override shouldComponentUpdate() {
+		this.intercept();
+		return false;
+	}
+	override componentDidMount() {
+		this.intercept();
+		setTimeout(() => this.intercept(), 500);
+		setTimeout(() => this.intercept(), 1000);
+		setTimeout(() => this.intercept(), 2000);
+		setTimeout(() => this.intercept(), 3000);
+		setTimeout(() => this.intercept(), 5000);
+		setTimeout(() => this.intercept(), 10000);
+	}
+	intercept() {
+		if (this.intercepted || !window.$) return;
+		const $ccpa = $('.fc-dns-dialog');
+		if (!$ccpa.length) return;
+		$ccpa.appendTo(this.base!);
+		// $ccpa.css({ position: 'relative', zIndex: 2 });
+		this.intercepted = true;
+	}
+	override render() {
+		return <div></div>;
 	}
 }
 
