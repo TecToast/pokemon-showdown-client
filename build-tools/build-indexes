@@ -281,7 +281,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 	const STADIUM = [2.04, 1.04];
 	const NATDEX = [9.1, 8.1];
 	const OTHER = [
-		9.9, ...Object.keys(MODDED_FORMATS), 9.89, 9.67, 9.6, 9.411, 9.41, 9.401, 9.4, 9.33, 9.2, -9.4, -9.401,
+		9.9, ...Object.keys(MODDED_FORMATS), 9.891, 9.89, 9.67, 9.6, 9.411, 9.41, 9.401, 9.4, 9.33, 9.2, -9.4, -9.401,
 		8.6, 8.4, 8.2, -8.4, -8.6,
 		7.1,
 		5.1,
@@ -310,6 +310,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		const isRS = genIdent === 3.1;
 		const isFRLG = genIdent === 3.11;
 		const isChampionsNatDex = genIdent === 9.89;
+		const isChampionsNatDexPrePatch = genIdent === 9.891;
 		const gen = (() => {
 			let genStr = 'gen' + genNum;
 			if (isSSDLC1) genStr += 'dlc1';
@@ -325,6 +326,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			if (isChampions) genStr = 'champions';
 			// MODDING
 			if (isChampionsNatDex) genStr = 'champions';
+			if (isChampionsNatDexPrePatch) genStr = 'championsprepatch';
 			if (genIdent in MODDED_FORMATS) {
 				genStr += MODDED_FORMATS[genIdent];
 			}
@@ -349,7 +351,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				if (genIdent in MODDED_FORMATS) {
 					return species.id === 'floetteeternal' ? 'OU' : species.natDexTier;
 				}
-				if (isChampionsNatDex) return Dex.species.get(id).num <= 0 ? 'Illegal' : 'OU';
+				if (isChampionsNatDex || isChampionsNatDexPrePatch) return Dex.species.get(id).num <= 0 ? 'Illegal' : 'OU';
 				if (isMetBattle) {
 					let tier = species.tier;
 					if (species.isNonstandard) {
@@ -576,6 +578,13 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			BattleTeambuilderTable['championsnatdex'].items = items;
 			BattleTeambuilderTable['championsnatdex'].overrideTier = overrideTier;
 			BattleTeambuilderTable['championsnatdex'].formatSlices = formatSlices;
+		} else if (isChampionsNatDexPrePatch) {
+			BattleTeambuilderTable['championsnatdexprepatch'] = {};
+			BattleTeambuilderTable['championsnatdexprepatch'].learnsets = {};
+			BattleTeambuilderTable['championsnatdexprepatch'].tiers = tiers;
+			BattleTeambuilderTable['championsnatdexprepatch'].items = items;
+			BattleTeambuilderTable['championsnatdexprepatch'].overrideTier = overrideTier;
+			BattleTeambuilderTable['championsnatdexprepatch'].formatSlices = formatSlices;
 		} else if (isVGC) {
 			BattleTeambuilderTable[gen + 'vgc'] = {};
 			BattleTeambuilderTable[gen + 'vgc'].tiers = tiers;
@@ -1100,6 +1109,21 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		}
 		BattleTeambuilderTable['championsnatdex'].learnsets[id] = newLearnsetObj
 	}
+	const ChampionsPrePatchLearnsets = Dex.mod('championsprepatch').data.Learnsets;
+	for (const id in learnsets) {
+		const dexNum = Dex.species.get(id).num;
+		if (dexNum <= 0) continue;
+		const baseLs = learnsets[id] ?? {};
+		const championsLs = ChampionsPrePatchLearnsets[id]?.learnset ?? {};
+		const fullLearnset = [...(Object.keys(baseLs)), ...(Object.keys(championsLs))]
+		let newLearnsetObj = {};
+		for (const moveid of fullLearnset) {
+			if (championsLs[moveid] || baseLs[moveid].includes("9")) {
+				newLearnsetObj[moveid] = '9a'
+			}
+		}
+		BattleTeambuilderTable['championsnatdexprepatch'].learnsets[id] = newLearnsetObj
+	}
 	for (const moddedFormat of Object.values(MODDED_FORMATS)) {
 		const modName = `gen9${moddedFormat}`;
 		const ModdedLearnsets = Dex.mod(modName).data.Learnsets;
@@ -1348,14 +1372,15 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 	//
 
 	for (const mod of [
-		'gen3rs', 'gen3frlg', 'gen5bw1', 'gen7letsgo', 'gen8bdsp', 'gen9ssb', 'champions', ...Object.values(MODDED_FORMATS).map(itm => `gen9${itm}`)
+		'gen3rs', 'gen3frlg', 'gen5bw1', 'gen7letsgo', 'gen8bdsp', 'gen9ssb', 'champions', 'championsprepatch', ...Object.values(MODDED_FORMATS).map(itm => `gen9${itm}`)
 	]) {
+		const teambuilderName = mod === 'championsprepatch' ? 'championsnatdexprepatch' : mod
 		const modDex = Dex.mod(mod);
 		const modData = modDex.data;
 		const parentDex = Dex.forGen(modDex.gen);
 
 		const overrideSpeciesData = {};
-		BattleTeambuilderTable[mod].overrideSpeciesData = overrideSpeciesData;
+		BattleTeambuilderTable[teambuilderName].overrideSpeciesData = overrideSpeciesData;
 		for (const id in modData.Pokedex) {
 			const modEntry = modDex.species.get(id);
 			const parentEntry = parentDex.species.get(id);
@@ -1368,7 +1393,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		}
 
 		const overrideMoveData = {};
-		BattleTeambuilderTable[mod].overrideMoveData = overrideMoveData;
+		BattleTeambuilderTable[teambuilderName].overrideMoveData = overrideMoveData;
 		for (const id in modData.Moves) {
 			const modEntry = modDex.moves.get(id);
 			const parentEntry = parentDex.moves.get(id);
@@ -1382,7 +1407,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		}
 
 		const overrideAbilityData = {};
-		BattleTeambuilderTable[mod].overrideAbilityData = overrideAbilityData;
+		BattleTeambuilderTable[teambuilderName].overrideAbilityData = overrideAbilityData;
 		for (const id in modData.Abilities) {
 			const modEntry = modDex.abilities.get(id);
 			const parentEntry = parentDex.abilities.get(id);
@@ -1395,7 +1420,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		}
 
 		const overrideItemData = {};
-		BattleTeambuilderTable[mod].overrideItemData = overrideItemData;
+		BattleTeambuilderTable[teambuilderName].overrideItemData = overrideItemData;
 		for (const id in modData.Items) {
 			const modEntry = modDex.items.get(id);
 			const parentEntry = parentDex.items.get(id);

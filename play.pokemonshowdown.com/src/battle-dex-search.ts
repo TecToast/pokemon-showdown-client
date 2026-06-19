@@ -594,7 +594,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 
 	protected formatType: 'doubles' | 'bdsp' | 'bdspdoubles' | 'rs' | 'frlg' | 'bw1' | 'letsgo' | 'metronome' | 'natdex' |
 		'nfe' | 'ssdlc1' | 'ssdlc1doubles' | 'predlc' | 'predlcdoubles' | 'predlcnatdex' | 'svdlc1' | 'svdlc1doubles' |
-		'svdlc1natdex' | 'stadium' | 'lc' | 'champions' | ModFormatType | 'championsnatdex' | null = null;
+		'svdlc1natdex' | 'stadium' | 'lc' | 'champions' | ModFormatType | 'championsnatdex' | 'championsnatdexprepatch' | null = null;
 	isDoubles = false;
 
 	/**
@@ -690,8 +690,13 @@ abstract class BattleTypedSearch<T extends SearchType> {
 		}
 		// MODDING
 		if (format.includes('champions') && format.includes("natdex")) {
-			this.formatType = 'championsnatdex';
-			this.dex = Dex.mod('champions' as ID);
+			if (format.includes('prepatch')) {
+				this.formatType = 'championsnatdexprepatch';
+				this.dex = Dex.mod('championsnatdexprepatch' as ID);
+			} else {
+				this.formatType = 'championsnatdex';
+				this.dex = Dex.mod('champions' as ID);
+			}
 		}
 		for (const modId of MOD_IDS) {
 			if (format.includes(modId)) {
@@ -840,6 +845,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 		let table = BattleTeambuilderTable;
 		if (this.formatType?.startsWith('bdsp')) table = table['gen8bdsp'];
 		if (this.formatType === 'championsnatdex') table = table['championsnatdex'];
+		if (this.formatType === 'championsnatdexprepatch') table = table['championsnatdexprepatch'];
 		for (const modId of MOD_IDS) {
 			if (this.formatType?.startsWith(modId)) table = table[`gen9${modId}`];
 		}
@@ -917,6 +923,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			let table = BattleTeambuilderTable;
 			if (this.formatType?.startsWith('bdsp')) table = table['gen8bdsp'];
 			if (this.formatType === 'championsnatdex') table = table['championsnatdex'];
+			if (this.formatType === 'championsnatdexprepatch') table = table['championsnatdexprepatch'];
 			for (const modId of MOD_IDS) {
 				if (this.formatType?.startsWith(modId)) table = table[`gen9${modId}`];
 			}
@@ -966,6 +973,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.formatType === 'stadium' ? `gen${gen}stadium${gen > 1 ? gen : ''}` :
 			this.formatType === 'champions' ? `champions` :
 			this.formatType === 'championsnatdex' ? `championsnatdex` :
+			this.formatType === 'championsnatdexprepatch' ? `championsnatdexprepatch` :
 			MOD_IDS.includes(this.formatType!) ? `gen9${this.formatType}` :
 			`gen${gen}`;
 		if (table?.[tableKey]) {
@@ -1079,6 +1087,8 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 			table = table[`champions`];
 		} else if (this.formatType === 'championsnatdex') {
 			table = table[`championsnatdex`];
+		} else if (this.formatType === 'championsnatdexprepatch') {
+			table = table[`championsnatdexprepatch`];
 		} else if (MOD_IDS.includes(this.formatType!)) {
 			table = table[`gen9${this.formatType}`];
 		} else if (isVGCOrBS) {
@@ -1455,6 +1465,8 @@ class BattleItemSearch extends BattleTypedSearch<'item'> {
 			table = table['gen8bdsp'];
 		} else if (this.formatType === 'championsnatdex') {
 			table = table['championsnatdex'];
+		} else if (this.formatType === 'championsnatdexprepatch') {
+			table = table['championsnatdexprepatch'];
 		} else if (MOD_IDS.some(itm => this.formatType?.startsWith(itm))) {
 			table = table[`gen9${MOD_IDS.find(itm => this.formatType?.startsWith(itm))}`];
 		} else if (this.formatType === 'bw1') {
@@ -1879,7 +1891,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		// MODDING
 		const regionBornLegality = dex.gen >= 6 &&
 			(/^battle(spot|stadium|festival)/.test(format) || format.startsWith('bss') ||
-				format.startsWith('vgc') || (dex.gen === 9 && this.formatType !== 'natdex' && this.formatType !== 'legendsza' && !MOD_IDS.includes(this.formatType as string) && this.formatType !== 'championsnatdex'));
+				format.startsWith('vgc') || (dex.gen === 9 && this.formatType !== 'natdex' && !MOD_IDS.includes(this.formatType as string) && !this.formatType?.startsWith('championsnatdex')));
 
 		let learnsetid = this.firstLearnsetid(species.id);
 		let moves: string[] = [];
@@ -1890,6 +1902,9 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		if (this.formatType?.startsWith('bdsp')) lsetTable = lsetTable['gen8bdsp'];
 		if (this.formatType === 'championsnatdex') {
 			lsetTable = lsetTable['championsnatdex'];
+		}
+		if (this.formatType === 'championsnatdexprepatch') {
+			lsetTable = lsetTable['championsnatdexprepatch'];
 		}
 		for (const modId of MOD_IDS) {
 			if (this.formatType?.startsWith(modId)) {
@@ -1926,7 +1941,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 					) {
 						continue;
 					}
-					if (this.formatType !== 'natdex' && !MOD_IDS.includes(this.formatType ?? '') && this.formatType !== 'championsnatdex' && move.isNonstandard === "Past") {
+					if (this.formatType !== 'natdex' && !MOD_IDS.includes(this.formatType ?? '') && this.formatType !== 'championsnatdex' && this.formatType !== 'championsnatdexprepatch' && move.isNonstandard === "Past") {
 						continue;
 					}
 					if (

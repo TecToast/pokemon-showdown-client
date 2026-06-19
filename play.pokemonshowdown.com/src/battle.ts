@@ -1003,7 +1003,7 @@ export class Side {
 		}
 		pokemon.statusData.toxicTurns = 0;
 		if (this.battle.gen === 5) pokemon.statusData.sleepTurns = 0;
-		if (this.battle.tier.includes('Champions')) {
+		if (this.battle.tier.includes('Champions') && !this.battle.tier.toLowerCase().includes('prepatch')) {
 			pokemon.timesAttacked = 0;
 		}
 		this.lastPokemon = pokemon;
@@ -3619,7 +3619,11 @@ export class Battle {
 				this.dex = Dex.mod('gen9ssb' as ID);
 			}
 			if (this.tier.includes(`Champions`)) {
-				this.dex = Dex.mod('champions' as ID);
+				if (this.tier.toLowerCase().includes('prepatch')) {
+					this.dex = Dex.mod('championsnatdexprepatch' as ID);
+				} else {
+					this.dex = Dex.mod('champions' as ID);
+				}
 			}
 			// MODDING
 			for (const modName of ['Batzi', 'DML', 'MNM', 'HTCYD']) {

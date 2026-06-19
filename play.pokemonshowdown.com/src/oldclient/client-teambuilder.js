@@ -36,7 +36,11 @@
 				}
 				// MODDING
 				if (this.curTeam.format.includes('championsnatdex')) {
-					this.curTeam.dex = Dex.mod('champions');
+					if(this.curTeam.format.includes('prepatch')) {
+						this.curTeam.dex = Dex.mod('championsnatdexprepatch');
+					} else {
+						this.curTeam.dex = Dex.mod('champions');
+					}
 				}
 				for(const modId of MOD_IDS) {
 					if (this.curTeam.format.includes(modId)) {
@@ -773,7 +777,11 @@
 			}
 			// MODDING
 			if (this.curTeam.format.includes('championsnatdex')) {
-				this.curTeam.dex = Dex.mod('champions');
+				if(this.curTeam.format.includes('prepatch')) {
+					this.curTeam.dex = Dex.mod('championsnatdexprepatch');
+				} else {
+					this.curTeam.dex = Dex.mod('champions');
+				}
 			}
 			for(const modId of MOD_IDS) {
 				if (this.curTeam.format.includes(modId)) {
@@ -1651,7 +1659,11 @@
 			}
 			// MODDING
 			if (this.curTeam.format.includes('championsnatdex')) {
-				this.curTeam.dex = Dex.mod('champions');
+				if(this.curTeam.format.includes('prepatch')) {
+					this.curTeam.dex = Dex.mod('championsnatdexprepatch');
+				} else {
+					this.curTeam.dex = Dex.mod('champions');
+				}
 			}
 			for(const modId of MOD_IDS) {
 				if (this.curTeam.format.includes(modId)) {
@@ -3643,7 +3655,7 @@
 						baseFormat.substr(0, 14) === 'battlefestival') set.level = 50;
 					if (baseFormat.startsWith('lc') || baseFormat.endsWith('lc')) set.level = 5;
 					if (baseFormat.substr(0, 19) === 'battlespotspecial17') set.level = 1;
-					if (format && format.teambuilderLevel && baseFormat !== 'championsnatdex') {
+					if (format && format.teambuilderLevel && !baseFormat.startsWith('championsnatdex')) {
 						set.level = format.teambuilderLevel;
 					}
 				}
