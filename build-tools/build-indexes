@@ -701,7 +701,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			if (!(genIdent in MODDED_FORMATS)) {
 				if (!isModdedItem) {
 					if (item.isNonstandard && !isMetBattle) {
-						if (isNatDex || isChampionsNatDex) {
+						if (isNatDex || isChampionsNatDex || isChampionsNatDexPrePatch) {
 							let curItem = item;
 							let curGen = genNum;
 							while (curItem.isNonstandard && curGen >= 7) {
