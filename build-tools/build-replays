@@ -46,4 +46,4 @@ function updateIndex() {
 	console.log("DONE");
 }
 
-updateIndex();
+// updateIndex();
