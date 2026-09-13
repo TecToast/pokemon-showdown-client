@@ -428,6 +428,7 @@ function toId() {
 					this.addRoom('lobby', null, true);
 				}
 				Storage.whenPrefsLoaded(function () {
+					Dex.loadTextData();
 					if (!Config.server.registered) {
 						app.send('/autojoin');
 						Backbone.history.start({ pushState: !Config.testclient });
@@ -742,20 +743,6 @@ function toId() {
 		},
 		setAFD: function (mode) {
 			if (mode === undefined) {
-				// init
-				if (typeof BattleTextAFD !== 'undefined') {
-					for (var id in BattleTextNotAFD) {
-						if (!BattleTextAFD[id]) {
-							BattleTextAFD[id] = BattleTextNotAFD[id];
-						} else {
-							var combined = {};
-							Object.assign(combined, BattleTextNotAFD[id]);
-							Object.assign(combined, BattleTextAFD[id]);
-							BattleTextAFD[id] = combined;
-						}
-					}
-				}
-
 				if (Config.server.afd) {
 					mode = true;
 				} else if (Dex.prefs('afd') !== undefined) {
@@ -767,12 +754,7 @@ function toId() {
 			}
 
 			Dex.afdMode = mode;
-
-			if (mode === true) {
-				BattleText = BattleTextAFD;
-			} else {
-				BattleText = BattleTextNotAFD;
-			}
+			if (mode === true) Dex.loadTextData('en-afd');
 		},
 		/**
 		 * This function establishes the actual connection to the sim server.

@@ -6,14 +6,12 @@
  * It also updates news and the learnsets-g6.js file.
  */
 
-"use strict";
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import child_process from 'node:child_process';
+import * as compiler from './compiler.mjs';
 
-const fs = require('node:fs');
-const crypto = require('node:crypto');
-const child_process = require('node:child_process');
-const compiler = require('./compiler.mjs');
-
-process.chdir(__dirname + '/..');
+process.chdir(import.meta.dirname + '/..');
 
 const AUTOCONFIG_START = '/*** Begin automatically generated configuration ***/';
 const AUTOCONFIG_END = '/*** End automatically generated configuration ***/';
@@ -23,13 +21,22 @@ function escapeRegex(string) {
 	return string.replace(/[/*.]/g, '\\$&');
 }
 
+function readOptionalFile(filename) {
+	try {
+		return fs.readFileSync(filename, UTF8);
+	} catch (error) {
+		if (error.code === 'ENOENT') return '';
+		throw error;
+	}
+}
+
 /*********************************************************
  * Update version number
  *********************************************************/
 
 process.stdout.write("Updating version... ");
 
-let version = require('../package.json').version;
+let version = JSON.parse(fs.readFileSync('package.json', UTF8)).version;
 try {
 	let commit = child_process.execSync('git rev-parse HEAD', {
 		stdio: ['ignore', 'pipe', 'ignore'],
@@ -43,9 +50,23 @@ try {
 } catch {}
 
 const routes = JSON.parse(fs.readFileSync('config/routes.json'));
+const translationCachebuster = (() => {
+	try {
+		const textDir = 'play.pokemonshowdown.com/data/text/';
+		const hash = crypto.createHash('md5');
+		for (const textFile of fs.readdirSync(textDir).filter(file => file.endsWith('.js')).sort()) {
+			hash.update(textFile);
+			hash.update(fs.readFileSync(textDir + textFile));
+		}
+		return hash.digest('hex').slice(0, 8);
+	} catch {
+		return '';
+	}
+})();
 const autoconfigRegex = new RegExp(`${escapeRegex(AUTOCONFIG_START)}[^]+${escapeRegex(AUTOCONFIG_END)}`);
 const autoconfig = `${AUTOCONFIG_START}
 Config.version = ${JSON.stringify(version)};
+Config.translationCachebuster = ${JSON.stringify(translationCachebuster)};
 
 Config.routes = {
 	root: '${routes.root}',
@@ -105,9 +126,9 @@ compiledFiles += compiler.compileToDir(`replay.pokemonshowdown.com/src`, `replay
 compiledFiles += compiler.compileToDir(`teams.pokemonshowdown.com/src`, `teams.pokemonshowdown.com/js`, compileOpts);
 
 try {
-	fs.statSync('play.pokemonshowdown.com/data/text.js');
-	// text.js exists, we can compile battledata
-	compiledFiles += compiler.compileToFile(
+	fs.statSync('play.pokemonshowdown.com/data/text/en.js');
+	// English text exists, we can compile battledata
+	compiledFiles += await compiler.compileToFile(
 		[
 			'play.pokemonshowdown.com/src/battle-dex.ts',
 			'play.pokemonshowdown.com/src/battle-teams.ts',
@@ -115,8 +136,7 @@ try {
 			'play.pokemonshowdown.com/src/battle-log.ts',
 			'play.pokemonshowdown.com/src/battle-log-misc.js',
 			'caches/pokemon-showdown/server/chat-formatter.ts',
-			'play.pokemonshowdown.com/data/text.js',
-			'play.pokemonshowdown.com/data/text-afd.js',
+			'play.pokemonshowdown.com/data/text/en.js',
 			'play.pokemonshowdown.com/src/battle-text-parser.ts',
 		],
 		'play.pokemonshowdown.com/js/battledata.js',
@@ -125,7 +145,7 @@ try {
 } catch {}
 
 if (!compileOpts.ignore) {
-	compiledFiles += compiler.compileToFile(
+	compiledFiles += await compiler.compileToFile(
 		['play.pokemonshowdown.com/src/battle-animations.ts', 'play.pokemonshowdown.com/src/battle-animations-moves.ts'],
 		'play.pokemonshowdown.com/data/graphics.js',
 		compileOpts
@@ -242,19 +262,20 @@ preactIndexContents = preactIndexContents.replace(/<!-- newsid -->/g, newsid);
 preactIndexContents = preactIndexContents.replace(/<!-- build-tools\/news-embed\.php -->/g, news);
 
 let indexContents2 = '';
-try {
-	const indexContentsOld = indexContents;
-	indexContents = indexContents
-		.replace(/<!-- config\/head-custom\.html -->/g, '' + fs.readFileSync('config/head-custom.html'));
-	preactIndexContents = preactIndexContents
-		.replace(/<!-- config\/head-custom\.html -->/g, '' + fs.readFileSync('config/head-custom.html'));
-	indexContents2 = indexContentsOld
-		.replace(/<!-- config\/head-custom\.html -->/g, '' + fs.readFileSync('config/head-custom-test.html'));
-} catch {}
+const customTestHead = readOptionalFile('config/head-custom-test.html');
+if (customTestHead) {
+	indexContents2 = indexContents.replace(/<!-- config\/head-custom\.html -->/g, customTestHead);
+}
+
+const customHead = readOptionalFile('config/head-custom.html');
+indexContents = indexContents.replace(/<!-- config\/head-custom\.html -->/g, customHead);
+preactIndexContents = preactIndexContents.replace(/<!-- config\/head-custom\.html -->/g, customHead);
 
 fs.writeFileSync('play.pokemonshowdown.com/caches/index-old.html', indexContents);
 if (indexContents2) {
 	fs.writeFileSync('play.pokemonshowdown.com/caches/index-test.html', indexContents2);
+} else {
+	fs.rmSync('play.pokemonshowdown.com/caches/index-test.html', { force: true });
 }
 fs.writeFileSync('play.pokemonshowdown.com/caches/index-new.html', preactIndexContents);
 fs.writeFileSync('play.pokemonshowdown.com/caches/crossprotocol.html', crossprotocolContents);

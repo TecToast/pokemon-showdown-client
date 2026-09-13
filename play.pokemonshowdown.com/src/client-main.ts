@@ -14,14 +14,11 @@ import { PSModel, PSStreamModel } from './client-core';
 import type { PSRoomPanel, PSRouter } from './panels';
 import { ChatRoom } from './panel-chat';
 import type { MainMenuRoom } from './panel-mainmenu';
-import { Dex, toID, type ID } from './battle-dex';
+import { Dex, TL, toID, type ID } from './battle-dex';
 import { BattleTextParser, type Args } from './battle-text-parser';
 import type { BattleRoom } from './panel-battle';
 import { Teams } from './battle-teams';
 import type preact from '../js/lib/preact';
-
-declare const BattleTextAFD: any;
-declare const BattleTextNotAFD: any;
 
 export const VERTICAL_HEADER_WIDTH = 240;
 export const NARROW_MODE_HEADER_WIDTH = 280;
@@ -58,6 +55,7 @@ export interface PSConfig {
 		teams: string,
 	};
 	customcolors: Record<string, string>;
+	translationCachebuster?: string;
 	whitelist?: string[];
 	testclient?: boolean;
 }
@@ -291,17 +289,6 @@ class PSPrefs extends PSStreamModel<string | null> {
 
 	setAFD(mode?: typeof this['afd']) {
 		if (mode === undefined) {
-			// init
-			if (typeof BattleTextAFD !== 'undefined') {
-				for (const id in BattleTextNotAFD) {
-					if (!BattleTextAFD[id]) {
-						BattleTextAFD[id] = BattleTextNotAFD[id];
-					} else {
-						BattleTextAFD[id] = { ...BattleTextNotAFD[id], ...BattleTextAFD[id] };
-					}
-				}
-			}
-
 			if (Config.server?.afd) {
 				mode = true;
 			} else if (this.afd !== undefined) {
@@ -313,14 +300,7 @@ class PSPrefs extends PSStreamModel<string | null> {
 		}
 
 		Dex.afdMode = mode;
-
-		if (typeof BattleTextAFD !== 'undefined') {
-			if (mode === true) {
-				(BattleText as any) = BattleTextAFD;
-			} else {
-				(BattleText as any) = BattleTextNotAFD;
-			}
-		}
+		if (mode === true) Dex.loadTextData('en-afd');
 	}
 	setShowDebug(mode = this.showdebug) {
 		const css = mode ? `.debug {display: block;}` : `.debug {display: none;}`;
@@ -488,7 +468,8 @@ class PSTeams extends PSStreamModel<'team' | 'format'> {
 		this.list.splice(index, 0, ...teams);
 	}
 	unpackOldBuffer(buffer: string) {
-		PS.alert(`Your team storage format is too old for PS. You'll need to upgrade it at https://${Config.routes.client}/recoverteams.html`);
+		const upgradeUrl = `https://${Config.routes.client}/recoverteams.html`;
+		PS.alert(TL`Your team storage format is too old for PS. You'll need to upgrade it at ${upgradeUrl}`);
 		this.list = [];
 	}
 	packAll(teams: Team[]) {
@@ -536,7 +517,7 @@ class PSTeams extends PSStreamModel<'team' | 'format'> {
 		PSLoginServer.query('getteams').then(data => {
 			if (!data) return;
 			if (data.actionerror) {
-				return PS.alert('Error loading uploaded teams: ' + data.actionerror);
+				return PS.alert(TL`Error loading uploaded teams: ${data.actionerror}`);
 			}
 			const teams: { [key: string]: UploadedTeam } = {};
 			for (const team of data.teams) {
@@ -619,7 +600,8 @@ class PSTeams extends PSStreamModel<'team' | 'format'> {
 		}).then(data => {
 			if (!team.uploaded) return;
 			if (!data?.team) {
-				PS.alert(`Failed to load team: ${data?.actionerror || "Error unknown. Try again later."}`);
+				const actionError = data?.actionerror as string || TL`Error unknown. Try again later.`;
+				PS.alert(TL`Failed to load team: ${actionError}`);
 				return;
 			}
 			team.uploaded.notLoaded = false;
@@ -751,7 +733,7 @@ class PSUser extends PSStreamModel<PSLoginState | null> {
 			this.loggingIn = null;
 			if (data?.curuser?.loggedin) {
 				// success!
-				const username = data.curuser.loggedin.username;
+				const username = data.curuser.username;
 				this.registered = { name: username, userid: toID(username) };
 				this.handleAssertion(name, data.assertion);
 			} else {
@@ -778,7 +760,7 @@ class PSUser extends PSStreamModel<PSLoginState | null> {
 	}
 	handleAssertion(name: string, assertion?: string | null) {
 		if (!assertion) {
-			PS.alert("Error logging in.");
+			PS.alert(TL`Error logging in.`);
 			return;
 		}
 		this.loggingIn = null;
@@ -790,7 +772,7 @@ class PSUser extends PSStreamModel<PSLoginState | null> {
 		if (assertion.startsWith('\r')) assertion = assertion.slice(1);
 		if (assertion.startsWith('\n')) assertion = assertion.slice(1);
 		if (assertion.includes('<')) {
-			PS.alert("Something is interfering with our connection to the login server. Most likely, your internet provider needs you to re-log-in, or your internet provider is blocking Pokémon Showdown.");
+			PS.alert(TL`Something is interfering with our connection to the login server. Most likely, your internet provider needs you to re-log-in, or your internet provider is blocking Pokémon Showdown.`);
 			return;
 		}
 		if (assertion === ';') {
@@ -800,7 +782,7 @@ class PSUser extends PSStreamModel<PSLoginState | null> {
 		} else if (assertion.startsWith(';;')) {
 			this.updateLogin({ error: assertion.slice(2) });
 		} else if (assertion.includes('\n') || !assertion) {
-			PS.alert("Something is interfering with our connection to the login server.");
+			PS.alert(TL`Something is interfering with our connection to the login server.`);
 		} else {
 			PS.send(`/trn ${name},0,${assertion}`);
 			this.update({ success: true });
@@ -813,7 +795,7 @@ class PSUser extends PSStreamModel<PSLoginState | null> {
 		PS.send(`/logout`);
 		PS.connection?.disconnect();
 
-		PS.alert("You have been logged out and disconnected.\n\nIf you wanted to change your name while staying connected, use the 'Change Name' button or the '/nick' command.");
+		PS.alert(TL`You have been logged out and disconnected.\n\nIf you wanted to change your name while staying connected, use the 'Change Name' button or the '/nick' command.`);
 		this.name = "";
 		this.group = '';
 		this.userid = "" as ID;
@@ -1118,6 +1100,9 @@ export class PSRoom extends PSStreamModel<Args | null> implements RoomOptions {
 		this.noURL = options.noURL || false;
 		this.args = options.args || null;
 	}
+	getTitle() {
+		return PS.roomTypes[this.type]?.getTitle?.(this) ?? this.title;
+	}
 	getParent() {
 		if (this.parentRoomid) return PS.rooms[this.parentRoomid] || null;
 		return null;
@@ -1265,6 +1250,19 @@ export class PSRoom extends PSStreamModel<Args | null> implements RoomOptions {
 		return parsedCommands;
 	}
 	globalClientCommands = this.parseClientCommands({
+		'language'(target) {
+			if (!target) return true;
+			if (['auto', 'automatic'].includes(toID(target))) {
+				PS.prefs.set('serversettings', { ...PS.prefs.serversettings, language: undefined });
+			} else {
+				const language = Dex.text.findLanguage(target)?.legacyId;
+				// on the off chance the server supports this language
+				if (!language) return true;
+				PS.prefs.set('serversettings', { ...PS.prefs.serversettings, language });
+			}
+			void Dex.loadTextData().then(() => PS.updateTranslatedText());
+			return `/language ${Dex.text.findLanguage(Dex.text.getLanguage())?.legacyId || 'english'}`;
+		},
 		'j,join'(target, cmd, elem) {
 			target = PS.router.extractRoomID(target) || target;
 			const roomid = /[^a-z0-9-]/.test(target) ? toID(target) as any as RoomID : target as RoomID;
@@ -1329,8 +1327,8 @@ export class PSRoom extends PSStreamModel<Args | null> implements RoomOptions {
 			// connect to server
 			const uptime = Date.now() - PS.startTime;
 			if (uptime > 24 * 60 * 60 * 1000) {
-				PS.confirm(`It's been over a day since you first connected. Please refresh.`, {
-					okButton: 'Refresh',
+				PS.confirm(TL`It's been over a day since you first connected. Please refresh.`, {
+					okButton: TL`[Refresh]`,
 				}).then(confirmed => {
 					if (confirmed) this.send(`/refresh`);
 				});
@@ -1551,11 +1549,7 @@ export class PSRoom extends PSStreamModel<Args | null> implements RoomOptions {
 				this.add('||AFD is currently set to ' + curMode);
 				this.send('/help afd');
 			}
-			for (let roomid in PS.rooms) {
-				let battle = PS.rooms[roomid] && (PS.rooms[roomid] as BattleRoom).battle;
-				if (!battle) continue;
-				battle.resetToCurrentTurn();
-			}
+			void Dex.loadTextData().then(() => PS.updateTranslatedText());
 		},
 		'clearpms'() {
 			let rooms = PS.miniRoomList.filter(roomid => roomid.startsWith('dm-'));
@@ -1856,6 +1850,7 @@ type PSRoomPanelSubclass<T extends PSRoom = PSRoom> = (new () => PSRoomPanel<T>)
 	noURL?: boolean,
 	icon?: preact.ComponentChildren,
 	title?: string,
+	getTitle?: (room: T) => string,
 	handleDrop?: (ev: DragEvent) => boolean | void,
 };
 
@@ -2260,6 +2255,13 @@ export const PS = new class extends PSModel {
 		this.updateLayout();
 		super.update();
 	}
+	updateTranslatedText() {
+		for (const room of Object.values(this.rooms)) {
+			const battle = (room as BattleRoom | undefined)?.battle;
+			if (battle) battle.resetToCurrentTurn();
+		}
+		this.update();
+	}
 	receive(msg: string) {
 		msg = msg.endsWith('\n') ? msg.slice(0, -1) : msg;
 		let roomid = '' as RoomID;
@@ -2380,7 +2382,7 @@ export const PS = new class extends PSModel {
 		const bracketRoomid = roomid ? `[${roomid}] ` : '';
 		console.log(`\u25b6\ufe0f ${bracketRoomid}%c${msg}`, "color: #776677");
 		if (!this.connection) {
-			PS.alert(`You are not connected and cannot send ${msg}.`);
+			PS.alert(TL`You are not connected and cannot send ${msg}.`);
 			return;
 		}
 		this.connection.send(`${roomid || ''}|${msg}`);
@@ -2664,7 +2666,7 @@ export const PS = new class extends PSModel {
 		okButton?: string, cancelButton?: string,
 		otherButtons?: preact.ComponentChildren, parentElem?: HTMLElement,
 	} = {}) {
-		opts.cancelButton ??= 'Cancel';
+		opts.cancelButton ??= TL`[Cancel]`;
 		return new Promise<boolean>(resolve => {
 			this.join(`popup-${this.popups.length}` as RoomID, {
 				args: { message, okValue: true, cancelValue: false, callback: resolve, ...opts, parentElem: null },
@@ -2676,7 +2678,7 @@ export const PS = new class extends PSModel {
 		defaultValue?: string, okButton?: string, cancelButton?: string, type?: 'text' | 'password' | 'number' | 'numeric',
 		label?: string, otherButtons?: preact.ComponentChildren, parentElem?: HTMLElement | null,
 	} = {}): Promise<string | null> {
-		opts.cancelButton ??= 'Cancel';
+		opts.cancelButton ??= TL`[Cancel]`;
 		return new Promise(resolve => {
 			this.join(`popup-${this.popups.length}` as RoomID, {
 				args: {
