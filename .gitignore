@@ -33,4 +33,5 @@ npm-debug.log
 /teams.pokemonshowdown.com/caches/
 /teams.pokemonshowdown.com/ads.txt
 
-sync.sh
+config/routes.json
+.idea/
